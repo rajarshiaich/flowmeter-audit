@@ -915,6 +915,8 @@ function exportXLSX(){
 
 
 // ── EXCEL IMPORT ─────────────────────────────────────────────────
+
+// ── EXCEL IMPORT ─────────────────────────────────────────────────
 function triggerImport(){document.getElementById('importFile').value='';document.getElementById('importFile').click();}
 function closeImportModal(){document.getElementById('importModal').style.display='none';}
 
@@ -924,17 +926,13 @@ function importXLSX(files){
   let pending=files.length;
   Array.from(files).forEach(file=>{
     const reader=new FileReader();
-    reader.onload=function(e){
+    reader.onload=function(ev){
       try{
-        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+        const wb=XLSX.read(ev.target.result,{type:'array',cellDates:false});
         log.push(...processWorkbook(wb,file.name));
       }catch(err){log.push(`<span class="err">✗ ${file.name}: ${err.message}</span>`);}
       pending--;
-      if(pending===0){
-        saveData(true);
-        renderPage();
-        showImportModal(log);
-      }
+      if(pending===0){saveData(true);renderPage();showImportModal(log);}
     };
     reader.readAsArrayBuffer(file);
   });
@@ -945,223 +943,329 @@ function showImportModal(log){
   document.getElementById('importModal').style.display='flex';
 }
 
-function sheetToRows(wb,name){
+function sheetRows(wb,name){
   const sh=wb.Sheets[name];if(!sh)return null;
-  return XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
+  return XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:true});
 }
 
-function cv(v){return v===null||v===undefined?'':String(v).trim();}
+function cv(v){
+  if(v===null||v===undefined)return'';
+  return String(v).trim();
+}
 
+// ── Robust date formatter ──────────────────────────────────────
+function fmtDate(v){
+  if(!v&&v!==0)return'';
+  // Excel serial number (number type)
+  if(typeof v==='number'){
+    // Excel date serial: days since 1900-01-01 (with Lotus 1900 bug: serial 60 = fake 29-Feb-1900)
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);
+  }
+  const s=String(v).trim();
+  if(!s)return'';
+  // Already yyyy-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  // dd.mm.yyyy  (e.g. 19.01.2026)
+  const m1=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if(m1)return`${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+  // dd-mm-yyyy or dd/mm/yyyy
+  const m2=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m2)return`${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+  // yyyy/mm/dd
+  const m3=s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
+  if(m3)return`${m3[1]}-${m3[2]}-${m3[3]}`;
+  // dd mmm yyyy (e.g. 19 Jan 2026)
+  const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  const m4=s.match(/^(\d{1,2})\s+([a-zA-Z]{3})\s+(\d{4})$/);
+  if(m4&&months[m4[2].toLowerCase()])return`${m4[3]}-${months[m4[2].toLowerCase()]}-${m4[1].padStart(2,'0')}`;
+  return s;
+}
+
+// ── Fuzzy meter type detection from sheet name or cell value ──
+function detectMeterType(sn){
+  const s=sn.toLowerCase().replace(/[^a-z0-9\s]/g,' ');
+  if(s.includes('orifice'))return'Orifice';
+  if(s.includes('usm')||s.includes('ultrasonic'))return'USM';
+  if(s.includes('mfm')||s.includes('coriolis'))return'MFM';
+  if(s.includes('turbine')||s.includes('tfm'))return'TFM';
+  if(s.includes('flare'))return'Flare';
+  if(s.includes('gc')||s.includes('gas chromatograph'))return'GC';
+  if(s.includes('weighbridge'))return'Weighbridge';
+  return null;
+}
+
+// ── Map Excel "Type of Meter" text to CAL_SCHEDULES key ───────
+function detectCalSchedKey(typeText){
+  const s=typeText.toLowerCase().trim();
+  if(s.includes('orifice'))return'orifice';
+  if(s.includes('usm')||s.includes('ultrasonic'))return'usm';
+  if(s.includes('mfm')||s.includes('coriolis'))return'mfm';
+  if(s.includes('turbine')||s.includes('tfm'))return'tfm';
+  if(s.includes('flare'))return'flare';
+  if(s.includes('gc')||s.includes('chromatograph'))return'gc';
+  if(s.includes('weighbridge'))return'weighbridge';
+  if(s.includes('flow computer')||s==='fc')return'fc';
+  if(s.includes('metering system')||s==='ms')return'ms';
+  return null;
+}
+
+// ── Fuzzy match activity text to sched.rows index ────────────
+function matchActivity(actText,schedRows){
+  const a=actText.toLowerCase().replace(/\s+/g,' ').trim();
+  // exact
+  let idx=schedRows.findIndex(r=>r.a.toLowerCase()===a);
+  if(idx>=0)return idx;
+  // partial: activity contains sched text or vice versa
+  idx=schedRows.findIndex(r=>a.includes(r.a.toLowerCase().slice(0,12))||r.a.toLowerCase().includes(a.slice(0,12)));
+  return idx;
+}
+
+// ── processWorkbook ───────────────────────────────────────────
 function processWorkbook(wb,fname){
   const log=[`<span class="ok">📄 ${fname}</span>`];
   wb.SheetNames.forEach(sn=>{
-    const rows=sheetToRows(wb,sn);if(!rows||!rows.length)return;
-    const header=cv(rows[0][0]).toUpperCase();
-
-    if(sn==='Cover'||sn==='Cover Letter'){
-      importCoverSheet(rows,sn,log);
-    } else if(sn==='Data'){
-      importDataSheet(rows,log);
-    } else if(sn==='Description'){
-      importDescriptionSheet(rows,log);
-    } else if(sn==='Observations & ATR'||sn==='Observations'){
-      importObservationsSheet(rows,log);
-    } else {
-      // Meter checklist sheets
+    const rows=sheetRows(wb,sn);
+    if(!rows||!rows.length)return;
+    if(sn==='Cover'||sn==='Cover Letter'){importCoverSheet(rows,sn,log);}
+    else if(sn==='Data'){importDataSheet(rows,log);}
+    else if(sn==='Description'){importDescriptionSheet(rows,log);}
+    else if(sn.toLowerCase().includes('observation')){importObservationsSheet(rows,log);}
+    else{
       const mtype=detectMeterType(sn);
       if(mtype){importMeterSheet(rows,sn,mtype,log);}
+      else{log.push(`  <span class="warn">  ⚠ Skipped sheet: "${sn}" (unrecognised type)</span>`);}
     }
   });
   return log;
 }
 
-function detectMeterType(sn){
-  const s=sn.toLowerCase();
-  if(s.includes('orifice'))return'Orifice';
-  if(s.includes('usm'))return'USM';
-  if(s.includes('mfm'))return'MFM';
-  if(s.includes('turbine')||s.includes('tfm'))return'TFM';
-  if(s.includes('flare'))return'Flare';
-  if(s.includes('gc')||s.includes('chromatograph'))return'GC';
-  if(s.includes('weighbridge'))return'Weighbridge';
-  return null;
-}
-
+// ── Cover sheet ───────────────────────────────────────────────
 function importCoverSheet(rows,sn,log){
-  let imp=0;
-  const c=state.cover;
-  // Helper: scan rows for label→value pairs
+  let imp=0;const c=state.cover;
   rows.forEach(row=>{
-    const k=cv(row[0]).toLowerCase(),v=cv(row[1]);
-    if(!v)return;
-    if(k.includes('document no')||k.includes('report no'))        {c.reportNo=v;imp++;}
-    else if(k.includes('date of audit'))                           {c.dateAudit=fmtDate(v);imp++;}
-    else if(k.includes('date of report'))                          {c.dateReport=fmtDate(v);imp++;}
-    else if(k.includes('installation'))                            {c.installations=v;imp++;}
+    const k=cv(row[0]).toLowerCase(),v=cv(row[1]);if(!v)return;
+    if(k.includes('document no')||k.includes('report no')){c.reportNo=v;imp++;}
+    else if(k.includes('date of audit')){c.dateAudit=fmtDate(v);imp++;}
+    else if(k.includes('date of report')){c.dateReport=fmtDate(v);imp++;}
+    else if(k.includes('installation')){c.installations=v;imp++;}
   });
-  // Auditor / icea / icei / instReps table detection
   let mode=null;
   rows.forEach(row=>{
-    const k=cv(row[0]).toUpperCase()+cv(row[1]).toUpperCase();
-    if(k.includes('AUDITOR'))            {mode='auditors';c.auditors=[];}
-    else if(k.includes('ASSET I/C TA'))  {mode='icea';c.icea=[];}
+    const k=(cv(row[0])+cv(row[1])).toUpperCase();
+    if(k.includes('AUDITOR')){mode='auditors';c.auditors=[];}
+    else if(k.includes('ASSET I/C TA')){mode='icea';c.icea=[];}
     else if(k.includes('ASSET I/C INST')){mode='icei';c.icei=[];}
     else if(k.includes('INSTALLATION REP')){mode='instReps';c.instReps=[];}
     else if(mode){
-      const sl=cv(row[0]);
-      if(!isNaN(parseInt(sl))&&parseInt(sl)>0){
-        if(mode==='instReps') {c[mode].push({inst:cv(row[1]),name:cv(row[2]),desig:cv(row[3]),cpf:cv(row[4])});imp++;}
-        else                  {c[mode].push({name:cv(row[1]),desig:cv(row[2]),cpf:cv(row[3]),contact:cv(row[4])});imp++;}
-      }
+      const sl=parseInt(cv(row[0]));if(isNaN(sl)||sl<1)return;
+      if(mode==='instReps')c[mode].push({inst:cv(row[1]),name:cv(row[2]),desig:cv(row[3]),cpf:cv(row[4])});
+      else c[mode].push({name:cv(row[1]),desig:cv(row[2]),cpf:cv(row[3]),contact:cv(row[4])});
+      imp++;
     }
   });
-  log.push(`  <span class="ok">  ✓ ${sn}: ${imp} fields imported</span>`);
+  log.push(`  <span class="ok">  ✓ ${sn}: ${imp} fields</span>`);
 }
 
+// ── Data sheet ────────────────────────────────────────────────
 function importDataSheet(rows,log){
-  // Expected: row[0]="ASSET DATA", row[1]=headers, row[2+]=data
+  // Header row has "Description" somewhere in col 1 or 0; data starts after
   let start=-1,imp=0;
-  for(let i=0;i<rows.length;i++){if(cv(rows[i][0]).toUpperCase()==='ASSET DATA'){start=i+2;break;}}
-  if(start<0){log.push('  <span class="warn">  ⚠ Data sheet: header not found</span>');return;}
+  for(let i=0;i<rows.length;i++){
+    const r0=cv(rows[i][0]).toLowerCase(),r1=cv(rows[i][1]).toLowerCase();
+    if(r0.includes('description')||r1.includes('description')){start=i+1;break;}
+  }
+  if(start<0){log.push('  <span class="warn">  ⚠ Data: header not found</span>');return;}
   const newRows=[];
   for(let i=start;i<rows.length;i++){
-    const d=cv(rows[i][0]),v=cv(rows[i][1]),u=cv(rows[i][2]);
-    if(!d&&!v&&!u)continue;
+    // data may be in col 0 or col 1 depending on template
+    let d=cv(rows[i][1])||cv(rows[i][0]);
+    let v=cv(rows[i][2]);
+    let u=cv(rows[i][3]);
+    if(!d)continue;
     newRows.push({desc:d,value:v,unit:u});imp++;
   }
   if(newRows.length)state.assetData.rows=newRows;
-  log.push(`  <span class="ok">  ✓ Data: ${imp} rows imported</span>`);
+  log.push(`  <span class="ok">  ✓ Data: ${imp} rows</span>`);
 }
 
+// ── Description sheet ─────────────────────────────────────────
 function importDescriptionSheet(rows,log){
   const ds=state.description;
-  let mode=null,imp=0,schedKey=null,schedTags=[],schedRowIdx=0;
-
-  rows.forEach((row,ri)=>{
-    const c0=cv(row[0]),c1=cv(row[1]);
-    const h=c0.toUpperCase();
-
-    if(h==='FLOW METER DETAILS'){mode='meters';ds.meterList=[];return;}
-    if(h==='AUDITED FLOW METER SUMMARY'){mode='summary';return;}
-    if(h==='OBSERVATION SNAPSHOT'){mode='snapshot';return;}
-
-    // Detect cal schedule blocks
-    const schedMatch=CAL_SCHEDULES.find(s=>c0.toLowerCase().includes(s.label.toLowerCase())&&c0.toLowerCase().includes('calibration schedule'));
-    if(schedMatch){mode='calSched';schedKey=schedMatch.key;schedTags=[];schedRowIdx=0;return;}
-
-    if(mode==='meters'){
-      if(cv(row[0]).toUpperCase()==='SN')return; // header row
-      const sn=parseInt(cv(row[0]));if(isNaN(sn)||sn<1)return;
-      const dateVal=cv(row[7]);
-      ds.meterList.push({inst:cv(row[1]),desc:cv(row[2]),type:cv(row[3]),tag:cv(row[4]),
-        service:cv(row[5]),purpose:cv(row[6]),lastCal:fmtDate(dateVal),freq:cv(row[8]),remarks:cv(row[9])});imp++;
-    }
-    else if(mode==='calSched'&&schedKey){
-      // First row after schedule label is header: Activity, Schedule, Tag1, Tag2 ...
-      if(c0.toUpperCase()==='ACTIVITY'||c0.toUpperCase()==='ACTIVITY'){
-        schedTags=row.slice(2).map(cv).filter(t=>t);
-        // Store tags
-        if(schedTags.length)ds.calTags[schedKey]=schedTags;
-        schedRowIdx=0;return;
-      }
-      if(!c0)return;
-      // Data row
-      row.slice(2).forEach((cell,ti)=>{
-        const v=cv(cell);if(v&&COMP.includes(v)){
-          ds.calSchedules[`${schedKey}_${schedRowIdx}_${ti}`]=v;imp++;
-        }
+  let imp=0;
+  // ── Part 1: Flow Meter Details table ──
+  // Find header row (contains "SN" and "Installation")
+  let meterStart=-1;
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    if(cv(r[0]).toUpperCase()==='SN'&&cv(r[1]).toUpperCase().includes('INSTALL')){meterStart=i+1;break;}
+  }
+  if(meterStart>=0){
+    ds.meterList=[];
+    for(let i=meterStart;i<rows.length;i++){
+      const r=rows[i];
+      const sn=parseInt(cv(r[0]));if(isNaN(sn)||sn<1)break;
+      // cols: 0=SN,1=Installation,2=Description,3=MeterType,4=Tag,5=Service,6=Purpose,7=LastCal,8=CalFreq,9+=extra
+      const lastCal=fmtDate(cv(r[7]));
+      ds.meterList.push({
+        inst:cv(r[1]),desc:cv(r[2]),type:cv(r[3]),tag:cv(r[4]),
+        service:cv(r[5]),purpose:cv(r[6]),lastCal:lastCal,
+        freq:cv(r[8]),remarks:cv(r[9])||''
       });
-      schedRowIdx++;
+      imp++;
     }
-    else if(mode==='summary'){
-      const SR=[['custGas','Custody meter (Gas)'],['custOil','Custody meter (Oil)'],['custCon','Custody meter (Condensate/LPG/C2C3)'],
-        ['prodGas','Production meter (Gas)'],['prodOil','Production meter (Oil)'],['wb','Weighbridge']];
-      if(cv(row[0]).toUpperCase()==='SR.NO'||cv(row[0]).toUpperCase()==='SR.NO.')return;
-      const sr=parseInt(cv(row[0]));if(isNaN(sr)||sr<1)return;
-      const key=SR[sr-1]&&SR[sr-1][0];if(!key)return;
-      ['T','W','NW','C','NC'].forEach((sf,j)=>{const v=cv(row[j+2]);if(v){ds.summary[key+sf]=v;imp++;}});
-    }
-    else if(mode==='snapshot'){
-      if(cv(row[0]).toUpperCase().includes('TOTAL CTM')){
-        const keys=['totalCTM','compliantCTM','critNC','highNC','modNC','atrPending'];
-        // next row is values
-        const vrow=rows[ri+1]||[];
-        keys.forEach((k,j)=>{const v=cv(vrow[j]);if(v){ds.summary[k]=v;imp++;}});
+    log.push(`  <span class="ok">  ✓ Meter list: ${ds.meterList.length} rows (dates parsed)</span>`);
+  }
+
+  // ── Part 2: Calibration Schedule tables ──
+  // Each cal schedule block starts with a row where col0="Type of Meter" / col1="Activity" / col2="Schedule"
+  // Data rows: col0=type(or blank), col1=activity, col2=schedule, col3+=compliance per tag
+  let calImp=0;
+  let i=0;
+  while(i<rows.length){
+    const r=rows[i];
+    const h0=cv(r[0]).toLowerCase(),h1=cv(r[1]).toLowerCase(),h2=cv(r[2]).toLowerCase();
+    // Detect header row of a cal schedule block
+    if((h0.includes('type of meter')||h0.includes('type'))&&h1.includes('activity')&&h2.includes('schedule')){
+      // tags start at col 3
+      const tags=[];
+      for(let t=3;t<r.length;t++){const tg=cv(r[t]);if(tg&&!tg.toLowerCase().includes('meter tag')||tg.length>8)tags.push(tg);else if(tg)tags.push(tg);}
+      // Only keep non-empty tags (filter trailing empties)
+      const cleanTags=[];for(let t=3;t<r.length;t++){const tg=cv(r[t]);if(tg)cleanTags.push(tg);}
+
+      let currentKey=null;
+      let dataRow=i+1;
+      while(dataRow<rows.length){
+        const dr=rows[dataRow];
+        const d0=cv(dr[0]),d1=cv(dr[1]),d2=cv(dr[2]);
+        // Next block header or empty section break
+        if(cv(dr[0]).toLowerCase().includes('type of meter')&&cv(dr[1]).toLowerCase().includes('activity'))break;
+        if(!d1&&!d0){dataRow++;continue;}
+        // Update current meter type if col0 is filled
+        if(d0)currentKey=detectCalSchedKey(d0)||currentKey;
+        if(!currentKey){dataRow++;continue;}
+        const sched=CAL_SCHEDULES.find(s=>s.key===currentKey);
+        if(!sched){dataRow++;continue;}
+        // Store tags for this schedule
+        if(cleanTags.length)ds.calTags[currentKey]=cleanTags;
+        // Match activity to schedule row
+        const actIdx=matchActivity(d1,sched.rows);
+        if(actIdx>=0){
+          cleanTags.forEach((_,ti)=>{
+            const val=cv(dr[3+ti]);
+            if(val&&COMP.includes(val)){ds.calSchedules[`${currentKey}_${actIdx}_${ti}`]=val;calImp++;}
+          });
+        }
+        dataRow++;
       }
-    }
+      i=dataRow;
+    } else {i++;}
+  }
+  log.push(`  <span class="ok">  ✓ Cal schedules: ${calImp} compliance entries</span>`);
+
+  // ── Part 3: Summary rows ──
+  const SR=[['custGas','custody meter (gas)'],['custOil','custody meter (oil)'],['custCon','custody meter (condensate'],['prodGas','production meter (gas)'],['prodOil','production meter (oil)'],['wb','weighbridge']];
+  rows.forEach(row=>{
+    const sn=parseInt(cv(row[0]));if(isNaN(sn)||sn<1||sn>6)return;
+    const label=cv(row[1]).toLowerCase();
+    const match=SR.find(([,l])=>label.includes(l.split('(')[0].trim()));
+    if(!match)return;
+    const key=match[0];
+    ['T','W','NW','C','NC'].forEach((sf,j)=>{const v=cv(row[j+2]);if(v){ds.summary[key+sf]=v;imp++;}});
   });
-  log.push(`  <span class="ok">  ✓ Description: ${imp} items imported</span>`);
+
+  imp+=calImp;
+  log.push(`  <span class="ok">  ✓ Description total: ${imp} items imported</span>`);
 }
 
+// ── Observations sheet ────────────────────────────────────────
 function importObservationsSheet(rows,log){
   let start=-1,imp=0;
   for(let i=0;i<rows.length;i++){
     const h=cv(rows[i][0]).toUpperCase();
-    if(h.includes('OBSERVATIONS')||h.includes('SL.NO')||h.includes('SL NO')){start=i+1;break;}
+    if(h.includes('SL')||h.includes('OBSERVATION')){
+      if(cv(rows[i][1]).toLowerCase().includes('tag')||cv(rows[i][2]).toLowerCase().includes('obs'))
+        {start=i+1;break;}
+    }
   }
   if(start<0){log.push('  <span class="warn">  ⚠ Observations: header not found</span>');return;}
   for(let i=start;i<rows.length;i++){
     const sn=parseInt(cv(rows[i][0]));if(isNaN(sn)||sn<1)continue;
     const tag=cv(rows[i][1]),obs=cv(rows[i][2]),cat=cv(rows[i][3]),pri=cv(rows[i][4]),act=cv(rows[i][5]),wc=cv(rows[i][6]);
     if(!obs&&!tag)continue;
-    // merge or push
-    const existing=state.observations.find(o=>o.tag===tag&&o.obs===obs);
-    if(!existing) state.observations.push({tag,obs,cat:OBS_CAT.includes(cat)?cat:'',priority:OBS_PRI.includes(pri)?pri:'',action:act,workcentre:wc});
+    const exists=state.observations.find(o=>o.tag===tag&&o.obs===obs);
+    if(!exists)state.observations.push({tag,obs,cat:OBS_CAT.includes(cat)?cat:'',priority:OBS_PRI.includes(pri)?pri:'',action:act,workcentre:wc});
     imp++;
   }
-  log.push(`  <span class="ok">  ✓ Observations: ${imp} rows imported</span>`);
+  log.push(`  <span class="ok">  ✓ Observations: ${imp} rows</span>`);
 }
 
+// ── Meter checklist sheet (multi-meter side-by-side columns) ──
 function importMeterSheet(rows,sn,mtype,log){
   if(!state.meters[mtype])state.meters[mtype]=[];
-  let currentMeter=null,imp=0,headerDone=false;
   const cl=CL[mtype]||[];
-  // Build flat map of all checkpoint ids
+  // Build checkpoint id lookup
   const cpMap={};cl.forEach(sec=>sec.items.forEach(item=>cpMap[item.id]=true));
 
-  rows.forEach(row=>{
-    const c0=cv(row[0]),c1=cv(row[1]),c2=cv(row[2]),c3=cv(row[3]);
-    if(c0.startsWith('--- METER ')){
-      // New meter block
-      const label=c0.replace(/^---\s*METER\s*\d+:\s*/,'').replace(/\s*---$/,'').trim();
-      currentMeter={label:label||mtype,header:{inst:'',svc:'',consumer:'',make:'',size:''},data:{}};
-      state.meters[mtype].push(currentMeter);
-      state.activeMeters[mtype]=state.meters[mtype].length-1;
-      headerDone=false;return;
-    }
-    if(!currentMeter)return;
-    // Header fields
-    if(!headerDone){
-      if(c0==='Installation')    {currentMeter.header.inst=c1;imp++;}
-      else if(c0==='Service')    {currentMeter.header.svc=c1;imp++;}
-      else if(c0==='Consumer')   {currentMeter.header.consumer=c1;imp++;}
-      else if(c0.includes('Make')){currentMeter.header.make=c1;imp++;}
-      else if(c0==='Meter Size') {currentMeter.header.size=c1;imp++;}
-      else if(c0==='SN'&&c1.toUpperCase().includes('CHECKPOINT')){headerDone=true;return;}
-    }
-    // Checkpoint rows: col0=id, col1=text, col2=val, col3=rem
-    if(c0&&cpMap[c0]){
-      if(!currentMeter.data[c0])currentMeter.data[c0]={val:'',rem:''};
-      if(c2){currentMeter.data[c0].val=c2;imp++;}
-      if(c3){currentMeter.data[c0].rem=c3;imp++;}
-    }
-  });
-  log.push(`  <span class="ok">  ✓ ${sn} (${mtype}): ${state.meters[mtype].length} meter(s), ${imp} fields imported</span>`);
-}
+  // Find the data header row: col0="SN", col1 contains "Checkpoint"
+  let headerRow=-1;
+  for(let i=0;i<rows.length;i++){
+    if(cv(rows[i][0]).toUpperCase()==='SN'&&cv(rows[i][1]).toLowerCase().includes('check')){headerRow=i;break;}
+  }
+  if(headerRow<0){log.push(`  <span class="warn">  ⚠ ${sn}: checkpoint header not found</span>`);return;}
 
-function fmtDate(v){
-  if(!v)return'';
-  if(v instanceof Date){return v.toISOString().slice(0,10);}
-  const s=String(v).trim();
-  // already yyyy-mm-dd
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  // dd-mm-yyyy or dd/mm/yyyy
-  const m1=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-  if(m1)return`${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
-  // mm/dd/yyyy
-  const m2=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(m2)return`${m2[3]}-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;
-  return s;
+  // Count meters from header row: cols 2,4,6... = Detail/Value columns
+  // But first get tags from row where col0="Tag No."
+  const tagRow=rows.findIndex(r=>cv(r[0]).toLowerCase().includes('tag no'));
+  const meterCount=Math.floor((rows[headerRow].length-2)/2)||1;
+  const meters=[];
+  for(let mi=0;mi<meterCount;mi++){
+    const valCol=2+mi*2;
+    const remCol=3+mi*2;
+    // Get tag from tagRow
+    let tag='';
+    if(tagRow>=0){tag=cv(rows[tagRow][valCol]);}
+    if(!tag||tag.toLowerCase().startsWith('meter'))tag=mtype+' '+(mi+1);
+    const m={label:tag,header:{inst:'',svc:'',consumer:'',make:'',size:''},data:{}};
+    // Read header fields from rows before headerRow
+    for(let r=0;r<headerRow;r++){
+      const k=cv(rows[r][0]).toLowerCase();
+      const v=cv(rows[r][valCol]);
+      if(!v)continue;
+      if(k.includes('installation'))m.header.inst=v;
+      else if(k.includes('service'))m.header.svc=v;
+      else if(k.includes('consumer'))m.header.consumer=v;
+      else if(k.includes('make')||k.includes('model'))m.header.make=v;
+      else if(k.includes('meter size')||k==='size')m.header.size=v;
+    }
+    meters.push({m,valCol,remCol});
+  }
+
+  // Read checkpoint rows
+  let imp=0;
+  for(let r=headerRow+1;r<rows.length;r++){
+    const id=cv(rows[r][0]);
+    if(!id||!cpMap[id])continue;
+    meters.forEach(({m,valCol,remCol})=>{
+      const val=cv(rows[r][valCol]);
+      const rem=cv(rows[r][remCol]);
+      if(val||rem){
+        if(!m.data[id])m.data[id]={val:'',rem:''};
+        if(val)m.data[id].val=val;
+        if(rem)m.data[id].rem=rem;
+        imp++;
+      }
+    });
+  }
+
+  // Merge: if meter with same tag already exists, update it; else push new
+  meters.forEach(({m})=>{
+    const existing=state.meters[mtype].find(x=>x.label===m.label);
+    if(existing){Object.assign(existing.header,m.header);Object.assign(existing.data,m.data);}
+    else{state.meters[mtype].push(m);state.activeMeters[mtype]=state.meters[mtype].length-1;}
+  });
+
+  log.push(`  <span class="ok">  ✓ ${sn} (${mtype}): ${meters.length} meter(s), ${imp} checkpoint fields</span>`);
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
