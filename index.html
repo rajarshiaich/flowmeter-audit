@@ -23,6 +23,7 @@ body{background:var(--navy);color:var(--text);font-family:'Segoe UI',system-ui,s
 .btn:active{opacity:.7}
 .btn-export{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
 .btn-reset{background:rgba(231,76,60,.12);border-color:var(--red);color:var(--red)}
+.btn-import{background:rgba(46,204,113,.1);border-color:var(--green);color:var(--green)}
 .nav-tabs{display:flex;overflow-x:auto;gap:4px;padding:7px 0;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:5px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2)}
@@ -81,6 +82,7 @@ select.ci option{background:var(--navy2)}
 .tagmgr{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px}
 .tpill{display:inline-flex;align-items:center;gap:3px;background:var(--navy3);border:1px solid var(--border);border-radius:12px;padding:3px 9px;font-size:11px}
 .tpill .trm{background:none;border:none;color:var(--text2);cursor:pointer;font-size:11px;padding:0}
+.tag-edit:focus{outline:1px solid var(--accent);border-radius:3px;background:rgba(245,166,35,.08)!important}
 .add-tag{background:transparent;border:1px dashed var(--border);color:var(--text2);border-radius:12px;padding:3px 9px;font-size:11px;cursor:pointer}
 .obs-row{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;position:relative}
 .obs-del{position:absolute;top:6px;right:6px;background:transparent;border:none;color:var(--red);cursor:pointer;font-size:15px}
@@ -95,6 +97,14 @@ select.ci option{background:var(--navy2)}
 .empty p{font-size:13px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
 .toast.show{opacity:1}
+.import-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px}
+.import-box{background:var(--navy2);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto}
+.import-box h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px}
+.import-log{background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;color:var(--text2);max-height:240px;overflow-y:auto;line-height:1.8;white-space:pre-wrap;word-break:break-all}
+.import-log .ok{color:var(--green)}
+.import-log .warn{color:var(--accent)}
+.import-log .err{color:var(--red)}
+.import-close{margin-top:12px;width:100%;padding:9px;background:var(--accent);border:none;border-radius:8px;color:var(--navy);font-weight:700;font-size:13px;cursor:pointer}
 @media(max-width:440px){.cp-grid,.mhf,.frow,.obs-grid{grid-template-columns:1fr}.hbtns .btn{padding:5px 7px;font-size:10px}}
 </style>
 </head>
@@ -108,13 +118,22 @@ select.ci option{background:var(--navy2)}
     <div class="hbtns">
       <button class="btn" onclick="saveData()">💾 Save</button>
       <button class="btn btn-reset" onclick="resetAll()">🗑 Reset</button>
+      <button class="btn btn-import" onclick="triggerImport()" title="Import from Excel">⬆ Import</button>
       <button class="btn btn-export" onclick="exportXLSX()">⬇ Export</button>
+      <input type="file" id="importFile" accept=".xlsx,.xls" multiple style="display:none" onchange="importXLSX(this.files)">
     </div>
   </div>
   <div class="nav-tabs" id="navTabs"></div>
 </div>
 <div class="main" id="mainContent"></div>
 <div class="toast" id="toast"></div>
+<div class="import-modal" id="importModal" style="display:none">
+  <div class="import-box">
+    <h3>📥 Excel Import Log</h3>
+    <div class="import-log" id="importLog">Processing...</div>
+    <button class="import-close" onclick="closeImportModal()">Done</button>
+  </div>
+</div>
 <script>
 // ── CONSTANTS ──────────────────────────────────────────────────
 const METER_TYPES=['Orifice','USM','MFM','TFM','Flare','GC','Weighbridge'];
@@ -644,7 +663,7 @@ function renderDescription(){
       <div class="sb">
         <div class="fl" style="margin-bottom:5px">${sched.tagLabel||'Meter Tags'}</div>
         <div class="tagmgr">
-          ${tags.map((t,ti)=>`<span class="tpill">${e(t)}<button class="trm" onclick="removeTag('${sched.key}',${ti})">×</button></span>`).join('')}
+          ${tags.map((t,ti)=>`<span class="tpill"><input class="tag-edit" value="${e(t)}" onchange="renameTag('${sched.key}',${ti},this.value)" oninput="this.style.width=Math.max(60,this.value.length*7+12)+'px'" onclick="event.stopPropagation()" style="background:transparent;border:none;color:var(--text);font-size:11px;width:${Math.max(60,t.length*7+12)}px;outline:none;padding:0;min-width:60px;max-width:180px"><button class="trm" onclick="removeTag('${sched.key}',${ti})">×</button></span>`).join('')}
           <button class="add-tag" onclick="addTag('${sched.key}')">+ Add Tag</button>
         </div>
         <div style="overflow-x:auto"><table class="st-table">
@@ -680,6 +699,8 @@ function renderDescription(){
 function addDR(){state.description.meterList.push({inst:'',desc:'',type:'',tag:'',service:'',purpose:'',lastCal:'',freq:'',remarks:''});renderPage();}
 function addTag(key){if(!state.description.calTags[key])state.description.calTags[key]=['Meter Tag 1','Meter Tag 2','Meter Tag 3'];const n=state.description.calTags[key].length+1;state.description.calTags[key].push('Meter Tag '+n);saveData(true);renderPage();}
 function removeTag(key,ti){if(!state.description.calTags[key])return;state.description.calTags[key].splice(ti,1);saveData(true);renderPage();}
+function renameTag(key,ti,val){if(!state.description.calTags[key])return;state.description.calTags[key][ti]=val;saveData(true);// also update the table header live without full re-render
+const tbl=document.querySelector(`#sched_${key} .st-table`);if(tbl){const ths=tbl.querySelectorAll('thead tr th');const tagIdx=2+ti;if(ths[tagIdx])ths[tagIdx].textContent=val||('Meter Tag '+(ti+1));}}
 function setCS(key,ri,ti,val){state.description.calSchedules[`${key}_${ri}_${ti}`]=val;saveData(true);}
 
 // ── METERS ──────────────────────────────────────────────────────
@@ -890,6 +911,257 @@ function exportXLSX(){
   });
   XLSX.writeFile(wb,`ONGC_FlowMeter_Audit_${new Date().toISOString().slice(0,10)}.xlsx`);
   showToast('✓ Excel exported!');
+}
+
+
+// ── EXCEL IMPORT ─────────────────────────────────────────────────
+function triggerImport(){document.getElementById('importFile').value='';document.getElementById('importFile').click();}
+function closeImportModal(){document.getElementById('importModal').style.display='none';}
+
+function importXLSX(files){
+  if(!files||!files.length)return;
+  const log=[];
+  let pending=files.length;
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+        log.push(...processWorkbook(wb,file.name));
+      }catch(err){log.push(`<span class="err">✗ ${file.name}: ${err.message}</span>`);}
+      pending--;
+      if(pending===0){
+        saveData(true);
+        renderPage();
+        showImportModal(log);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function showImportModal(log){
+  document.getElementById('importLog').innerHTML=log.join('\n')||'<span class="warn">Nothing imported.</span>';
+  document.getElementById('importModal').style.display='flex';
+}
+
+function sheetToRows(wb,name){
+  const sh=wb.Sheets[name];if(!sh)return null;
+  return XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
+}
+
+function cv(v){return v===null||v===undefined?'':String(v).trim();}
+
+function processWorkbook(wb,fname){
+  const log=[`<span class="ok">📄 ${fname}</span>`];
+  wb.SheetNames.forEach(sn=>{
+    const rows=sheetToRows(wb,sn);if(!rows||!rows.length)return;
+    const header=cv(rows[0][0]).toUpperCase();
+
+    if(sn==='Cover'||sn==='Cover Letter'){
+      importCoverSheet(rows,sn,log);
+    } else if(sn==='Data'){
+      importDataSheet(rows,log);
+    } else if(sn==='Description'){
+      importDescriptionSheet(rows,log);
+    } else if(sn==='Observations & ATR'||sn==='Observations'){
+      importObservationsSheet(rows,log);
+    } else {
+      // Meter checklist sheets
+      const mtype=detectMeterType(sn);
+      if(mtype){importMeterSheet(rows,sn,mtype,log);}
+    }
+  });
+  return log;
+}
+
+function detectMeterType(sn){
+  const s=sn.toLowerCase();
+  if(s.includes('orifice'))return'Orifice';
+  if(s.includes('usm'))return'USM';
+  if(s.includes('mfm'))return'MFM';
+  if(s.includes('turbine')||s.includes('tfm'))return'TFM';
+  if(s.includes('flare'))return'Flare';
+  if(s.includes('gc')||s.includes('chromatograph'))return'GC';
+  if(s.includes('weighbridge'))return'Weighbridge';
+  return null;
+}
+
+function importCoverSheet(rows,sn,log){
+  let imp=0;
+  const c=state.cover;
+  // Helper: scan rows for label→value pairs
+  rows.forEach(row=>{
+    const k=cv(row[0]).toLowerCase(),v=cv(row[1]);
+    if(!v)return;
+    if(k.includes('document no')||k.includes('report no'))        {c.reportNo=v;imp++;}
+    else if(k.includes('date of audit'))                           {c.dateAudit=fmtDate(v);imp++;}
+    else if(k.includes('date of report'))                          {c.dateReport=fmtDate(v);imp++;}
+    else if(k.includes('installation'))                            {c.installations=v;imp++;}
+  });
+  // Auditor / icea / icei / instReps table detection
+  let mode=null;
+  rows.forEach(row=>{
+    const k=cv(row[0]).toUpperCase()+cv(row[1]).toUpperCase();
+    if(k.includes('AUDITOR'))            {mode='auditors';c.auditors=[];}
+    else if(k.includes('ASSET I/C TA'))  {mode='icea';c.icea=[];}
+    else if(k.includes('ASSET I/C INST')){mode='icei';c.icei=[];}
+    else if(k.includes('INSTALLATION REP')){mode='instReps';c.instReps=[];}
+    else if(mode){
+      const sl=cv(row[0]);
+      if(!isNaN(parseInt(sl))&&parseInt(sl)>0){
+        if(mode==='instReps') {c[mode].push({inst:cv(row[1]),name:cv(row[2]),desig:cv(row[3]),cpf:cv(row[4])});imp++;}
+        else                  {c[mode].push({name:cv(row[1]),desig:cv(row[2]),cpf:cv(row[3]),contact:cv(row[4])});imp++;}
+      }
+    }
+  });
+  log.push(`  <span class="ok">  ✓ ${sn}: ${imp} fields imported</span>`);
+}
+
+function importDataSheet(rows,log){
+  // Expected: row[0]="ASSET DATA", row[1]=headers, row[2+]=data
+  let start=-1,imp=0;
+  for(let i=0;i<rows.length;i++){if(cv(rows[i][0]).toUpperCase()==='ASSET DATA'){start=i+2;break;}}
+  if(start<0){log.push('  <span class="warn">  ⚠ Data sheet: header not found</span>');return;}
+  const newRows=[];
+  for(let i=start;i<rows.length;i++){
+    const d=cv(rows[i][0]),v=cv(rows[i][1]),u=cv(rows[i][2]);
+    if(!d&&!v&&!u)continue;
+    newRows.push({desc:d,value:v,unit:u});imp++;
+  }
+  if(newRows.length)state.assetData.rows=newRows;
+  log.push(`  <span class="ok">  ✓ Data: ${imp} rows imported</span>`);
+}
+
+function importDescriptionSheet(rows,log){
+  const ds=state.description;
+  let mode=null,imp=0,schedKey=null,schedTags=[],schedRowIdx=0;
+
+  rows.forEach((row,ri)=>{
+    const c0=cv(row[0]),c1=cv(row[1]);
+    const h=c0.toUpperCase();
+
+    if(h==='FLOW METER DETAILS'){mode='meters';ds.meterList=[];return;}
+    if(h==='AUDITED FLOW METER SUMMARY'){mode='summary';return;}
+    if(h==='OBSERVATION SNAPSHOT'){mode='snapshot';return;}
+
+    // Detect cal schedule blocks
+    const schedMatch=CAL_SCHEDULES.find(s=>c0.toLowerCase().includes(s.label.toLowerCase())&&c0.toLowerCase().includes('calibration schedule'));
+    if(schedMatch){mode='calSched';schedKey=schedMatch.key;schedTags=[];schedRowIdx=0;return;}
+
+    if(mode==='meters'){
+      if(cv(row[0]).toUpperCase()==='SN')return; // header row
+      const sn=parseInt(cv(row[0]));if(isNaN(sn)||sn<1)return;
+      const dateVal=cv(row[7]);
+      ds.meterList.push({inst:cv(row[1]),desc:cv(row[2]),type:cv(row[3]),tag:cv(row[4]),
+        service:cv(row[5]),purpose:cv(row[6]),lastCal:fmtDate(dateVal),freq:cv(row[8]),remarks:cv(row[9])});imp++;
+    }
+    else if(mode==='calSched'&&schedKey){
+      // First row after schedule label is header: Activity, Schedule, Tag1, Tag2 ...
+      if(c0.toUpperCase()==='ACTIVITY'||c0.toUpperCase()==='ACTIVITY'){
+        schedTags=row.slice(2).map(cv).filter(t=>t);
+        // Store tags
+        if(schedTags.length)ds.calTags[schedKey]=schedTags;
+        schedRowIdx=0;return;
+      }
+      if(!c0)return;
+      // Data row
+      row.slice(2).forEach((cell,ti)=>{
+        const v=cv(cell);if(v&&COMP.includes(v)){
+          ds.calSchedules[`${schedKey}_${schedRowIdx}_${ti}`]=v;imp++;
+        }
+      });
+      schedRowIdx++;
+    }
+    else if(mode==='summary'){
+      const SR=[['custGas','Custody meter (Gas)'],['custOil','Custody meter (Oil)'],['custCon','Custody meter (Condensate/LPG/C2C3)'],
+        ['prodGas','Production meter (Gas)'],['prodOil','Production meter (Oil)'],['wb','Weighbridge']];
+      if(cv(row[0]).toUpperCase()==='SR.NO'||cv(row[0]).toUpperCase()==='SR.NO.')return;
+      const sr=parseInt(cv(row[0]));if(isNaN(sr)||sr<1)return;
+      const key=SR[sr-1]&&SR[sr-1][0];if(!key)return;
+      ['T','W','NW','C','NC'].forEach((sf,j)=>{const v=cv(row[j+2]);if(v){ds.summary[key+sf]=v;imp++;}});
+    }
+    else if(mode==='snapshot'){
+      if(cv(row[0]).toUpperCase().includes('TOTAL CTM')){
+        const keys=['totalCTM','compliantCTM','critNC','highNC','modNC','atrPending'];
+        // next row is values
+        const vrow=rows[ri+1]||[];
+        keys.forEach((k,j)=>{const v=cv(vrow[j]);if(v){ds.summary[k]=v;imp++;}});
+      }
+    }
+  });
+  log.push(`  <span class="ok">  ✓ Description: ${imp} items imported</span>`);
+}
+
+function importObservationsSheet(rows,log){
+  let start=-1,imp=0;
+  for(let i=0;i<rows.length;i++){
+    const h=cv(rows[i][0]).toUpperCase();
+    if(h.includes('OBSERVATIONS')||h.includes('SL.NO')||h.includes('SL NO')){start=i+1;break;}
+  }
+  if(start<0){log.push('  <span class="warn">  ⚠ Observations: header not found</span>');return;}
+  for(let i=start;i<rows.length;i++){
+    const sn=parseInt(cv(rows[i][0]));if(isNaN(sn)||sn<1)continue;
+    const tag=cv(rows[i][1]),obs=cv(rows[i][2]),cat=cv(rows[i][3]),pri=cv(rows[i][4]),act=cv(rows[i][5]),wc=cv(rows[i][6]);
+    if(!obs&&!tag)continue;
+    // merge or push
+    const existing=state.observations.find(o=>o.tag===tag&&o.obs===obs);
+    if(!existing) state.observations.push({tag,obs,cat:OBS_CAT.includes(cat)?cat:'',priority:OBS_PRI.includes(pri)?pri:'',action:act,workcentre:wc});
+    imp++;
+  }
+  log.push(`  <span class="ok">  ✓ Observations: ${imp} rows imported</span>`);
+}
+
+function importMeterSheet(rows,sn,mtype,log){
+  if(!state.meters[mtype])state.meters[mtype]=[];
+  let currentMeter=null,imp=0,headerDone=false;
+  const cl=CL[mtype]||[];
+  // Build flat map of all checkpoint ids
+  const cpMap={};cl.forEach(sec=>sec.items.forEach(item=>cpMap[item.id]=true));
+
+  rows.forEach(row=>{
+    const c0=cv(row[0]),c1=cv(row[1]),c2=cv(row[2]),c3=cv(row[3]);
+    if(c0.startsWith('--- METER ')){
+      // New meter block
+      const label=c0.replace(/^---\s*METER\s*\d+:\s*/,'').replace(/\s*---$/,'').trim();
+      currentMeter={label:label||mtype,header:{inst:'',svc:'',consumer:'',make:'',size:''},data:{}};
+      state.meters[mtype].push(currentMeter);
+      state.activeMeters[mtype]=state.meters[mtype].length-1;
+      headerDone=false;return;
+    }
+    if(!currentMeter)return;
+    // Header fields
+    if(!headerDone){
+      if(c0==='Installation')    {currentMeter.header.inst=c1;imp++;}
+      else if(c0==='Service')    {currentMeter.header.svc=c1;imp++;}
+      else if(c0==='Consumer')   {currentMeter.header.consumer=c1;imp++;}
+      else if(c0.includes('Make')){currentMeter.header.make=c1;imp++;}
+      else if(c0==='Meter Size') {currentMeter.header.size=c1;imp++;}
+      else if(c0==='SN'&&c1.toUpperCase().includes('CHECKPOINT')){headerDone=true;return;}
+    }
+    // Checkpoint rows: col0=id, col1=text, col2=val, col3=rem
+    if(c0&&cpMap[c0]){
+      if(!currentMeter.data[c0])currentMeter.data[c0]={val:'',rem:''};
+      if(c2){currentMeter.data[c0].val=c2;imp++;}
+      if(c3){currentMeter.data[c0].rem=c3;imp++;}
+    }
+  });
+  log.push(`  <span class="ok">  ✓ ${sn} (${mtype}): ${state.meters[mtype].length} meter(s), ${imp} fields imported</span>`);
+}
+
+function fmtDate(v){
+  if(!v)return'';
+  if(v instanceof Date){return v.toISOString().slice(0,10);}
+  const s=String(v).trim();
+  // already yyyy-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  // dd-mm-yyyy or dd/mm/yyyy
+  const m1=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m1)return`${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+  // mm/dd/yyyy
+  const m2=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m2)return`${m2[3]}-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;
+  return s;
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
