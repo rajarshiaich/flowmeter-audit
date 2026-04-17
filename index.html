@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1628">
+<title>ONGC Flow Meter Audit</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--navy:#0a1628;--navy2:#112240;--navy3:#1a3a5c;--accent:#f5a623;--green:#2ecc71;--red:#e74c3c;--text:#e8edf4;--text2:#8899aa;--border:rgba(255,255,255,0.1);--card:rgba(255,255,255,0.04);--r:10px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--navy);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.header{background:var(--navy2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 14px}
+.header-top{display:flex;align-items:center;justify-content:space-between;height:54px}
+.logo-badge{background:var(--accent);color:var(--navy);font-weight:800;font-size:11px;padding:3px 7px;border-radius:4px}
+.logo-title{font-size:13px;font-weight:600;margin-left:7px}
+.logo-sub{font-size:10px;color:var(--text2);margin-left:7px}
+.hbtns{display:flex;gap:5px}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:active{opacity:.7}
+.btn-export{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
+.btn-reset{background:rgba(231,76,60,.12);border-color:var(--red);color:var(--red)}
+.nav-tabs{display:flex;overflow-x:auto;gap:4px;padding:7px 0;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:5px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
+.main{padding:14px;max-width:780px;margin:0 auto}
+.ptitle{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.sh{padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.sl{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.7px;text-transform:uppercase}
+.st{font-size:13px;font-weight:600;margin-top:1px}
+.sv{color:var(--text2);font-size:15px;transition:transform .2s;flex-shrink:0;margin-left:6px}
+.sc.open .sv{transform:rotate(180deg)}
+.sb{display:none;padding:0 11px 11px}
+.sc.open .sb{display:block}
+.fl{font-size:10px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.fi{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;-webkit-appearance:none}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--text2)}
+textarea.fi{resize:vertical;min-height:52px;font-family:inherit}
+select.fi{cursor:pointer}
+select.fi option{background:var(--navy2)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.cp-row{border-top:1px solid var(--border);padding:8px 0}
+.cp-row:first-child{border-top:none}
+.cp-id{font-size:10px;font-weight:700;color:var(--accent);min-width:24px;display:inline-block}
+.cp-text{font-size:12px;line-height:1.4;margin-bottom:6px}
+.cp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ci{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:6px 8px;outline:none;-webkit-appearance:none}
+.ci:focus{border-color:var(--accent)}
+.ci::placeholder{color:rgba(136,153,170,.55)}
+select.ci{cursor:pointer}
+select.ci option{background:var(--navy2)}
+.mm{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:13px}
+.mm-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.mt-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mt{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);position:relative}
+.mt.am{background:var(--navy3);border-color:var(--accent);color:var(--text)}
+.mt .db{position:absolute;top:-4px;right:-4px;background:var(--red);border:none;color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:none;align-items:center;justify-content:center;cursor:pointer}
+.mt:hover .db{display:flex}
+.add-m{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px dashed var(--accent);background:transparent;color:var(--accent)}
+.mhf{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.cs-section{margin-bottom:18px}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 7px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.dt td{padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+.dt td input,.dt td select{width:100%;background:transparent;border:none;color:var(--text);font-size:12px;outline:none;padding:2px 3px;-webkit-appearance:none}
+.dt td select option{background:var(--navy2)}
+.dt td:focus-within{background:rgba(245,166,35,.07)}
+.add-row{width:100%;padding:7px;border:1px dashed var(--border);background:transparent;color:var(--text2);font-size:12px;border-radius:6px;cursor:pointer;margin-top:6px}
+.st-table{width:100%;border-collapse:collapse;font-size:11px}
+.st-table th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 7px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.st-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;color:var(--text)}
+.st-table td:nth-child(2){color:var(--text2);font-size:10px;font-style:italic}
+.st-table td select{width:100%;background:var(--navy2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:4px 5px;border-radius:5px;outline:none;cursor:pointer;-webkit-appearance:none}
+.st-table td select option{background:var(--navy2)}
+.tagmgr{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tpill{display:inline-flex;align-items:center;gap:3px;background:var(--navy3);border:1px solid var(--border);border-radius:12px;padding:3px 9px;font-size:11px}
+.tpill .trm{background:none;border:none;color:var(--text2);cursor:pointer;font-size:11px;padding:0}
+.add-tag{background:transparent;border:1px dashed var(--border);color:var(--text2);border-radius:12px;padding:3px 9px;font-size:11px;cursor:pointer}
+.obs-row{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;position:relative}
+.obs-del{position:absolute;top:6px;right:6px;background:transparent;border:none;color:var(--red);cursor:pointer;font-size:15px}
+.obs-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.add-obs{width:100%;padding:8px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:13px;font-weight:600;border-radius:7px;cursor:pointer;margin-top:8px}
+.pw{margin-bottom:13px}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px}
+.pb{height:4px;background:var(--border);border-radius:2px}
+.pf{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.empty{text-align:center;padding:34px 18px;color:var(--text2)}
+.empty .icon{font-size:36px;margin-bottom:8px}
+.empty p{font-size:13px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+.toast.show{opacity:1}
+@media(max-width:440px){.cp-grid,.mhf,.frow,.obs-grid{grid-template-columns:1fr}.hbtns .btn{padding:5px 7px;font-size:10px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-top">
+    <div style="display:flex;align-items:center">
+      <span class="logo-badge">ONGC</span>
+      <div><div class="logo-title">Flow Meter Audit</div><div class="logo-sub">Field Checklist · Offline PWA</div></div>
+    </div>
+    <div class="hbtns">
+      <button class="btn" onclick="saveData()">💾 Save</button>
+      <button class="btn btn-reset" onclick="resetAll()">🗑 Reset</button>
+      <button class="btn btn-export" onclick="exportXLSX()">⬇ Export</button>
+    </div>
+  </div>
+  <div class="nav-tabs" id="navTabs"></div>
+</div>
+<div class="main" id="mainContent"></div>
+<div class="toast" id="toast"></div>
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────────
+const METER_TYPES=['Orifice','USM','MFM','TFM','Flare','GC','Weighbridge'];
+const PAGES=[{id:'cover',label:'📋 Cover'},{id:'data',label:'📊 Asset Data'},{id:'desc',label:'🗂 Description'},{id:'meters',label:'⚙ Meters'},{id:'obs',label:'⚠ Observations'}];
+const OBS_CAT=['','Construction Deficiency','System Issue','Configuration Error','Calibration Gap','Maintenance Lapse','Security Concern','Upstream Process Issue','Documentation Gap'];
+const OBS_PRI=['','NC - Critical','NC - High','NC - Moderate'];
+const COMP=['','Complied','Not Complied','N/A'];
+
+const CAL_SCHEDULES=[
+  {label:'Orifice Meter',key:'orifice',rows:[
+    {a:'Calibration of DPT',s:'Every 3 months or GSA, whichever is lower'},
+    {a:'Calibration of PT',s:'Every 3 months or GSA, whichever is lower'},
+    {a:'Calibration of TT',s:'Every 3 months or GSA, whichever is lower'},
+    {a:'Calibration of RTD',s:'Every Year'},
+    {a:'Meter Tube Inspection',s:'Every Year'},
+  ]},
+  {label:'USM',key:'usm',rows:[
+    {a:'Diagnostic and Zero Check',s:'Every 6 months'},
+    {a:'Calibration of PT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of TT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of RTD',s:'Every Year'},
+    {a:'Meter Calibration',s:'Every 5 years or GSA/COSA, whichever is lower'},
+  ]},
+  {label:'MFM (Coriolis)',key:'mfm',rows:[
+    {a:'Diagnostic and Zero Check',s:'Every 6 months'},
+    {a:'Calibration of PT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of TT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of RTD',s:'Every Year'},
+    {a:'Meter Inspection',s:'Every Year'},
+    {a:'Meter Calibration',s:'Every 5 years or COSA, whichever is lower'},
+  ]},
+  {label:'Turbine Meter (TFM)',key:'tfm',rows:[
+    {a:'Calibration of PT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of TT',s:'Every 6 months or GSA/COSA, whichever is lower'},
+    {a:'Calibration of RTD',s:'Every Year'},
+    {a:'Meter Proving',s:'Every 2 years'},
+  ]},
+  {label:'Flow Computer',key:'fc',tagLabel:'FC Tag',rows:[
+    {a:'Third Party Validation',s:'Every Year'},
+  ]},
+  {label:'Metering System',key:'ms',rows:[
+    {a:'Validation by FCRI / BV / SGS etc.',s:'Any change in system configuration'},
+  ]},
+];
+
+// ── CHECKLISTS ──────────────────────────────────────────────────
+const CL={
+Orifice:[
+  {sec:'A',title:'Primary Element — Orifice Plate & Meter Run',items:[
+    {id:'A1',t:'Make / Model / Serial No. of primary device (orifice plate)'},
+    {id:'A2',t:'Bore diameter d (mm) — as per AGA-3 certified report'},
+    {id:'A3',t:'Pipe inside diameter D (mm) — as per AGA-3 certified report'},
+    {id:'A4',t:'Beta ratio (d/D) — confirm within AGA-3 limits (0.3–0.75)'},
+    {id:'A5',t:'Orifice plate type: Single-chamber / Senior / Simplex / Dual-chamber'},
+    {id:'A6',t:'AGA-3 certification available for this meter run (Yes/No)'},
+    {id:'A7',t:'Flow profiler / conditioner installed (Yes/No/Type)'},
+    {id:'A8',t:'Make / Model / Serial No. of meter run and profiler'},
+    {id:'A9',t:'Third-party validation of meter run'},
+    {id:'A10',t:'Frequency of meter run validation per GSA (every 2 years)'},
+    {id:'A11',t:'Upstream straight run available ≥10D (confirm D value used)'},
+    {id:'A12',t:'Downstream straight run available ≥5D'},
+    {id:'A13',t:'Temperature tapping — confirm downstream of orifice within 4D'},
+    {id:'A14',t:'Static pressure tapping: Upstream / Downstream / Flange / Pipe'},
+    {id:'A15',t:'Impulse tubing slopes per AGA-3: Gas — slope UP; Liquid — slope DOWN'},
+    {id:'A16',t:'Pressure tapping orientation: Vertical / Horizontal / Angled'},
+    {id:'A17',t:'By-pass available? Positive isolation (double-block-and-bleed or blind)?'},
+    {id:'A18',t:'Standby / duty philosophy (Single / 1W+1S / Other)'},
+    {id:'A19',t:'Meter run serial no. matching AGA-3 certified report (Yes/No)'},
+    {id:'A20',t:'Orifice plate last physical inspection date and bore measurement recorded'},
+    {id:'A21',t:'Orifice plate condition: clean / fouled / damaged'},
+    {id:'A22',t:'All unused ports / isolation valves properly blinded'},
+    {id:'A23',t:'Upstream scrubber / separator available and LCV in auto mode'},
+    {id:'A24',t:'Filtration unit / coalescing filter installed upstream of orifice'},
+    {id:'A25',t:'Operating DP: What % of calibrated DP span? Target: 40–60% of span'},
+  ]},
+  {sec:'B',title:'Secondary Instruments',items:[
+    {id:'B1',t:'DPT / MVT: Make / Model / Range / Serial No.'},
+    {id:'B2',t:'DPT calibration span optimised so operating DP = 40–60% of span'},
+    {id:'B3',t:'PT (Static pressure transmitter): Make / Model / Range'},
+    {id:'B4',t:'RTD / TT: Make / Model / Wiring (3-wire or 4-wire)'},
+    {id:'B5',t:'RTD properly inserted into thermowell (adequate stem length; no bending)'},
+    {id:'B6',t:'RTD / TT calibration with temperature bath at every calibration event (Y/N)'},
+    {id:'B7',t:'Secondary instrument calibration certificates available'},
+    {id:'B8',t:'All isolation valves / manifold valves sealed. As-found seal nos. recorded.'},
+    {id:'B9',t:'All instruments earthed to instrument earth pit'},
+    {id:'B10',t:'All cable glands, terminations, and tag numbers per industry standard'},
+  ]},
+  {sec:'C',title:'Flow Computer / Tertiary Device',items:[
+    {id:'C1',t:'FC Make / Model / Serial No. / Firmware Version'},
+    {id:'C2',t:'FC is API 21.1 compliant (Yes/No). NMI / OIML certification on site.'},
+    {id:'C3',t:'FC security / password protection enabled'},
+    {id:'C4',t:'FC calibration port sealed when not in use'},
+    {id:'C5',t:'FC configuration backup file available and dated'},
+    {id:'C6',t:'FC firmware version recorded; updates notified to ONGC'},
+    {id:'C7',t:'FC covered / protected from direct sunlight and atmospheric effects'},
+    {id:'C8',t:'FC on UPS (battery backup). Battery voltage monitored in FC.'},
+    {id:'C9',t:'Audit trail facility available (event log, alarm log, config change log)'},
+    {id:'C10',t:'FC integrated to SCADA / DCS. Live readings matching.'},
+    {id:'C11',t:'SAP PRA auto-pickup of totalizer (Yes/No)'},
+    {id:'C12',t:'SAP PM auto-calibration order generated per GSA frequency (Yes/No)'},
+  ]},
+  {sec:'D',title:'Flow Computer Configuration',items:[
+    {id:'D1',t:'AGA-3 flow calculation block used (not DCS proprietary block)'},
+    {id:'D2',t:'AGA-8 edition in use (Detailed 1994 or 2017, not 1992)'},
+    {id:'D3',t:'Base pressure = 1.03323 kg/cm² entered as per GSA'},
+    {id:'D4',t:'Base temperature = 15.00°C entered as per GSA'},
+    {id:'D5',t:'Atmospheric / barometric pressure updated per GSA reference document'},
+    {id:'D6',t:'Contract hour (06:00 hrs) entered correctly'},
+    {id:'D7',t:'Orifice bore d, pipe bore D, material, expansion coefficients per AGA-3'},
+    {id:'D8',t:'Gas viscosity, specific heat ratio, compressibility per AGA standards'},
+    {id:'D9',t:'No-flow cut-off value set (record value)'},
+    {id:'D10',t:'Reynolds number checked — confirm turbulent flow (Re > 4000)'},
+    {id:'D11',t:'Static pressure tapping location in FC matches physical location'},
+    {id:'D12',t:'No fixed / keypad values for P or T (all live transmitter inputs)'},
+    {id:'D13',t:'Gas analysis parameters (all components incl. iC4, nC4, iC5, nC5) entered correctly'},
+    {id:'D14',t:'Gas analysis update frequency: fortnightly (1st and 16th) per GSA'},
+  ]},
+  {sec:'E',title:'Calibration & Validation',items:[
+    {id:'E1',t:'Present calibration frequency being followed (monthly / quarterly / as per GSA)'},
+    {id:'E2',t:'Calibration frequency matches GSA requirement'},
+    {id:'E3',t:'Unmeasured gas/fluid during calibration process quantified and stated in report'},
+    {id:'E4',t:'Seal nos. (as-found AND as-left) documented in calibration report'},
+    {id:'E5',t:'SAP t-code ZPMCALIB used for generating calibration record'},
+    {id:'E6',t:'FC validation with (Kelton/equivalent) software. Zair, Zb, Zf documented.'},
+    {id:'E7',t:'Local atmospheric pressure report available and updated at each calibration'},
+    {id:'E8',t:'Master calibration instruments (DPT, PT, TT) calibrated from NABL lab (ISO 17025)'},
+    {id:'E9',t:'Last joint meter run validation report available (Third Party / GAIL / Consumer)'},
+    {id:'E10',t:'Last orifice plate change / re-certification report (if applicable)'},
+    {id:'E11',t:'Flow computer validation (3rd party) record — every year'},
+  ]},
+  {sec:'F',title:'Documentation & SOP',items:[
+    {id:'F1',t:'Approved SOP for CTM calibration available at plant and followed'},
+    {id:'F2',t:'Approved SOP for CTM maintenance available at plant'},
+    {id:'F3',t:'GSA / COSA document available at installation (not only at head office)'},
+    {id:'F4',t:'CTM spares (DPT, PT, RTD, manifold valves, orifice plate) available on site'},
+    {id:'F5',t:'Existing FC model is within OEM active lifecycle (not obsolete)'},
+  ]},
+  {sec:'G',title:'General / Safety',items:[
+    {id:'G1',t:'All DPT, PT, TT, FC suitable for hazardous area (Ex certification available)'},
+    {id:'G2',t:'Metering skid elevated from ground (no water logging risk)'},
+    {id:'G3',t:'All unused ports of DPT/PT/TT/RTD/FC properly plugged'},
+    {id:'G4',t:'Alarms configured for min/max DP, P, and T — test alarm trip points'},
+    {id:'G5',t:'Event, alarm, and historical data logs available and downloaded with date'},
+    {id:'G6',t:'Local display of all instruments (PT, TT, DPT, FC) working'},
+  ]},
+],
+USM:[
+  {sec:'A',title:'Meter Identification & Physical',items:[
+    {id:'A1',t:'Make / Model / Serial No. of meter body'},{id:'A2',t:'Meter size (inches) and pressure rating'},
+    {id:'A3',t:'Number of independent measurement paths'},{id:'A4',t:'Transducer make / model / serial nos. per path'},
+    {id:'A5',t:'Flow conditioner / straightening vane installed (Yes/No/Type)'},{id:'A6',t:'Meter is AGA-9 / OIML R117 compliant'},
+    {id:'A7',t:'Upstream straight run ≥ 10D confirmed'},{id:'A8',t:'Downstream straight run ≥ 5D confirmed'},
+    {id:'A9',t:'By-pass available? If yes — positive isolation'},{id:'A10',t:'Operating velocity range: record min/max, confirm within spec'},
+  ]},
+  {sec:'B',title:'Transducer & Path Diagnostics',items:[
+    {id:'B1',t:'Visual inspection of transducers — no damage, wear, or contamination'},
+    {id:'B2',t:'Signal strength / SNR for each path (record per path)'},
+    {id:'B3',t:'All measurement paths transmitting correctly (all paths active)'},
+    {id:'B4',t:'SOS per path vs. AGA-10 expected value. Spread: < 0.5 m/s gas; < 2 m/s liquid'},
+    {id:'B5',t:'Velocity profile check — velocity per path and profile correction factor'},
+    {id:'B6',t:'Acoustic path integrity indicators / deviation flags — any active alarms?'},
+    {id:'B7',t:'Diagnostic data downloaded and saved (velocity profile, SOS, gain, AGC)'},
+    {id:'B8',t:'Spool / meter tube dimensions in FC match calibration certificate values'},
+    {id:'B9',t:'Spool dimensions last verified (every 5 years or per GSA)'},
+  ]},
+  {sec:'C',title:'Secondary Instruments',items:[
+    {id:'C1',t:'PT: Make / Model / Range / Cal. date'},{id:'C2',t:'TT / RTD: Make / Model / Wiring'},
+    {id:'C3',t:'PT, TT calibrated — certificates available'},{id:'C4',t:'RTD/TT calibrated with temp bath — deviation < ±0.2°C'},
+    {id:'C5',t:'All instruments earthed to instrument earth pit'},{id:'C6',t:'Isolation valve seals: as-found and as-left seal nos. recorded'},
+  ]},
+  {sec:'D',title:'Flow Computer',items:[
+    {id:'D1',t:'FC Make / Model / Firmware Version'},{id:'D2',t:'FC API 21.1 certified. NMI / OIML-R137 on site.'},
+    {id:'D3',t:'FC security / password enabled'},{id:'D4',t:'FC calibration port sealed'},
+    {id:'D5',t:'FC audit trail available (config changes, alarms, events)'},{id:'D6',t:'FC configuration backup file available and dated'},
+    {id:'D7',t:'Base pressure = 1.03323 kg/cm² and base temperature = 15.00°C'},
+    {id:'D8',t:'AGA-8 Ed.2017 (or 1994) Detailed used — NOT 1992 edition'},
+    {id:'D9',t:'Gas analysis updated fortnightly per GSA. Last chemistry report date: ___'},
+    {id:'D10',t:'GC online / integrated to FC (Yes/No). GC tag no.: ___'},
+    {id:'D11',t:'For liquid USMs: density / viscosity from densitometer or keypad'},
+    {id:'D12',t:'FC SCADA integrated. Live readings matching. SAP PRA auto-pickup.'},
+    {id:'D13',t:'SAP auto-PM calibration order generated per GSA frequency'},
+  ]},
+  {sec:'E',title:'Calibration & Validation',items:[
+    {id:'E1',t:'Last calibration date and next due date (5 years gas / 2 years liquid)'},
+    {id:'E2',t:'Calibration at accredited flow laboratory (FCRI / NMI or equivalent)'},
+    {id:'E3',t:'Zero flow check at line conditions (value recorded)'},
+    {id:'E4',t:'FC validation with Kelton/equivalent. Zair, Zb, Zf documented.'},
+    {id:'E5',t:'Seal nos. (as-found AND as-left) documented in calibration report'},
+    {id:'E6',t:'Unmeasured fluid during calibration quantified and stated in report'},
+    {id:'E7',t:'SAP ZPMCALIB record generated'},{id:'E8',t:'Master instruments (PT, TT) NABL-traceable'},
+    {id:'E9',t:'Prover meter (if applicable) — last calibration at FCRI'},
+  ]},
+  {sec:'F',title:'Documentation & SOP',items:[
+    {id:'F1',t:'SOP for USM calibration available at plant'},{id:'F2',t:'SOP for USM maintenance available'},
+    {id:'F3',t:'GSA / COSA available at installation'},{id:'F4',t:'Existing FC model within OEM active lifecycle'},
+    {id:'F5',t:'Alarm / event / diagnostic log downloaded and saved'},{id:'F6',t:'Configuration report saved at every calibration'},
+    {id:'F7',t:'Maintenance log (transducer replacements, FC firmware updates) maintained'},{id:'F8',t:'GC calibration report and repeatability test record available'},
+  ]},
+  {sec:'G',title:'General / Safety',items:[
+    {id:'G1',t:'All instruments suitable for hazardous area (Ex cert.)'},{id:'G2',t:'Alarms for signal loss, path failure, SOS deviation'},
+    {id:'G3',t:'UPS confirmed. Battery voltage monitored.'},{id:'G4',t:'Local display of PT, TT, FC working'},
+    {id:'G5',t:'Metering skid earthed and elevated from ground'},
+  ]},
+],
+MFM:[
+  {sec:'A',title:'Meter Identification & Hardware',items:[
+    {id:'A1',t:'Sensor Make / Model / Serial No.'},{id:'A2',t:'NOC / Transmitter Make / Model / Serial No.'},
+    {id:'A3',t:'Meter size and pressure rating'},{id:'A4',t:'Skid-based or standalone — confirm physical installation'},
+    {id:'A5',t:'Philosophy: Single / Duty-Standby (confirm)'},{id:'A6',t:'Strainer cum air-eliminator installed upstream. DPT working?'},
+    {id:'A7',t:'MFM sensor NOT under mechanical tension / stress. Confirm by visual.'},
+    {id:'A8',t:'PT and TT installed downstream of MFM sensor — working?'},
+    {id:'A9',t:'Heat tracing / insulation on MFM skid (if high-viscosity service)'},
+    {id:'A10',t:'By-pass available? If yes — positive isolation'},
+    {id:'A11',t:'Auto-sampler installed (Yes/No). Working?'},{id:'A12',t:'Online water-cut (BS&W) meter installed. Working?'},
+    {id:'A13',t:'Online densitometer installed. Working? Cal. date.'},
+    {id:'A14',t:'Pipeline vibration at MFM sensor location — acceptable level?'},
+    {id:'A15',t:'All cable glands, instrument earth pits, and tag nos. per standard'},
+  ]},
+  {sec:'B',title:'NOC / Transmitter Software (AGA-11 / OIML R117)',items:[
+    {id:'B1',t:'Configuration parameters entered correctly (tube constant K1/K2, D1, D2, flow factor)'},
+    {id:'B2',t:'Dry Oil Density (DOD) entered as per latest chemistry report. Record DOD value and date.'},
+    {id:'B3',t:'Effluent / emulsion density entered for correct water cut calculation'},
+    {id:'B4',t:'Reference temperature = 15.00°C entered in NOC/FC'},
+    {id:'B5',t:'No-flow cut-off value set (record value)'},{id:'B6',t:'Meter factors for volume, mass, and density'},
+    {id:'B7',t:'No fixed / keypad values for pressure, temperature, or density'},
+    {id:'B8',t:'DOD update register maintained at installation'},{id:'B9',t:'NOC physical security switch available and enabled'},
+    {id:'B10',t:'NOC security / password enabled'},{id:'B11',t:'Events, alarms, and history logs available and downloadable'},
+    {id:'B12',t:'NOC communication: Modbus / HART / Pulse (record type)'},
+    {id:'B13',t:'Flow rate, density, water cut, DD integrated to SCADA/DCS'},
+    {id:'B14',t:'SAP PRA auto-pickup of totalizer (Yes/No)'},{id:'B15',t:'FC/NOC API 21.1 certified. NMI / OIML-R137 cert. on site.'},
+  ]},
+  {sec:'C',title:'Calibration (AGA-11 / OIML R117 / FCRI)',items:[
+    {id:'C1',t:'Last calibration date. Next due date. Cal. agency (FCRI / OEM / 3rd party)'},
+    {id:'C2',t:'Calibration frequency matches COSA / GSA'},
+    {id:'C3',t:'Density and temperature calibration at every annual inspection'},
+    {id:'C4',t:'Prover meter / master meter: type (ball prover / Coriolis prover / master meter)'},
+    {id:'C5',t:'Prover meter last calibrated at FCRI (date)'},
+    {id:'C6',t:'K-factor and new meter factor recorded and entered in NOC after proving'},
+    {id:'C7',t:'Lab distilled water report used during density calibration'},
+    {id:'C8',t:'Local atmospheric pressure report used during calibration'},
+    {id:'C9',t:'Seal nos. (as-found and as-left) recorded in calibration report'},
+    {id:'C10',t:'SAP ZPMCALIB record generated'},{id:'C11',t:'SAP auto-PM calibration order generated per COSA frequency'},
+    {id:'C12',t:'Master calibration instruments NABL-traceable (ISO 17025)'},
+  ]},
+  {sec:'D',title:'Documentation & SOP',items:[
+    {id:'D1',t:'SOP for MFM calibration available at plant'},{id:'D2',t:'SOP for MFM maintenance available'},
+    {id:'D3',t:'COSA / GSA document available at installation'},
+    {id:'D4',t:'Dry density report issued monthly by Chemistry lab — available on site'},
+    {id:'D5',t:'MFM spares (sensor, transmitter, gaskets) available on site'},
+    {id:'D6',t:'Existing model within OEM active lifecycle (not obsolete)'},
+    {id:'D7',t:'Auto-sampler calibration and validation record available'},
+    {id:'D8',t:'Online densitometer calibration record available'},
+  ]},
+  {sec:'E',title:'General / Safety',items:[
+    {id:'E1',t:'All instruments suitable for hazardous area (Ex cert.)'},{id:'E2',t:'Metering skid earthed (min. 2 earth pits). Earth pit resistance acceptable.'},
+    {id:'E3',t:'UPS power supply available and tested'},{id:'E4',t:'Local display of NOC/transmitter working'},
+    {id:'E5',t:'Alarms for min/max flow, density deviation, water cut configured'},
+  ]},
+],
+TFM:[
+  {sec:'A',title:'Primary Element',items:[
+    {id:'A1',t:'Make / Model / Serial No. of turbine meter'},{id:'A2',t:'Meter size (inches / DN) and pressure rating'},
+    {id:'A3',t:'Average K-factor (pulses per unit volume) from calibration certificate'},
+    {id:'A4',t:'K-factor linearity (%): confirm within ±0.5% across flow range'},
+    {id:'A5',t:'K-factor repeatability (%): confirm ≤ 0.2%'},{id:'A6',t:'Flow range: Qmin to Qmax — confirm operating flow within range'},
+    {id:'A7',t:'Operating flow currently at what % of Qmax?'},{id:'A8',t:'Philosophy: Single / Duty-Standby / 1W+1S (confirm)'},
+    {id:'A9',t:'By-pass available? If yes — positive isolation'},
+    {id:'A10',t:'Upstream straight run ≥ 10D (without conditioner) OR ≥ 5D with approved conditioner'},
+    {id:'A11',t:'Downstream straight run ≥ 5D confirmed'},{id:'A12',t:'Flow conditioner / straightening vane installed (Yes/No/Type)'},
+    {id:'A13',t:'Strainer / filter installed upstream. Mesh size adequate to protect rotor blades.'},
+    {id:'A14',t:'Strainer last cleaned — date recorded'},{id:'A15',t:'Air eliminator installed upstream (for liquid service — mandatory)'},
+    {id:'A16',t:'Liquid service: pipeline fully flooded (no gas pockets)'},
+    {id:'A17',t:'Rotor last inspected — any blade damage, erosion, or fouling?'},
+    {id:'A18',t:'Meter orientation: horizontal / vertical — confirm per Mfr specification'},
+    {id:'A19',t:'All unused ports / isolation valves properly blinded'},
+  ]},
+  {sec:'B',title:'Pickup Coil / Detector',items:[
+    {id:'B1',t:'Pickup coil type: Magnetic / Reluctance / Hall-effect / RF (record)'},
+    {id:'B2',t:'Number of pickups (dual-redundant recommended for CTM)'},
+    {id:'B3',t:'Pickup signal: confirm clean square-wave pulse output — no noise / flutter'},
+    {id:'B4',t:'Pickup coil gap setting checked against Mfr spec'},
+    {id:'B5',t:'Both pickups working (if dual). Output frequency matches FC reading.'},
+  ]},
+  {sec:'C',title:'Secondary Instruments',items:[
+    {id:'C1',t:'PT: Make / Model / Range / Cal. date'},{id:'C2',t:'TT / RTD: Make / Model / Wiring (3W/4W) / Cal. date'},
+    {id:'C3',t:'RTD/TT calibrated with temp bath. As-found deviation < ±0.2°C'},
+    {id:'C4',t:'Densitometer installed and working (Yes/No).'},{id:'C5',t:'Densitometer calibration certificate available (NABL)'},
+    {id:'C6',t:'Viscosity meter installed (Yes/No). Viscosity correction applied in FC?'},
+    {id:'C7',t:'Water cut meter / BS&W meter installed (Yes/No)'},
+    {id:'C8',t:'All secondary instrument calibration certificates available (NABL / ISO 17025)'},
+    {id:'C9',t:'All isolation valves / manifold valves sealed. As-found seal nos. recorded.'},
+    {id:'C10',t:'All instruments earthed to dedicated instrument earth pit'},
+    {id:'C11',t:'All cable glands, terminations, and tag nos. per industry standard'},
+  ]},
+  {sec:'D',title:'Flow Computer / Tertiary Device',items:[
+    {id:'D1',t:'FC / integrator: Make / Model / Firmware version'},{id:'D2',t:'FC is API 21.1 compliant. NMI / OIML-R117 / OIML-R137 certification on site.'},
+    {id:'D3',t:'FC security / password enabled'},{id:'D4',t:'FC calibration port sealed when not in use'},
+    {id:'D5',t:'FC configuration backup file available and dated'},{id:'D6',t:'FC firmware version recorded; OEM updates notified to ONGC'},
+    {id:'D7',t:'FC covered / protected from sunlight and weather'},{id:'D8',t:'FC on UPS. Battery voltage monitored in FC.'},
+    {id:'D9',t:'Audit trail: event log, alarm log, config change log available'},{id:'D10',t:'FC integrated to SCADA/DCS. Live readings matching.'},
+    {id:'D11',t:'SAP PRA auto-pickup of totalizer (Yes/No)'},{id:'D12',t:'SAP PM auto-calibration order generated per GSA/COSA frequency'},
+  ]},
+  {sec:'E',title:'Flow Computer Configuration',items:[
+    {id:'E1',t:'K-factor (and K-factor table if multipoint) per latest calibration certificate'},
+    {id:'E2',t:'Meter factor (MF) entered and matches calibration report'},{id:'E3',t:'Reference temperature = 15.00°C entered in FC'},
+    {id:'E4',t:'Base pressure = 1.03323 kg/cm² entered as per GSA'},{id:'E5',t:'Atmospheric / barometric pressure updated per GSA reference'},
+    {id:'E6',t:'Viscosity correction applied in FC (if high-viscosity service)'},
+    {id:'E7',t:'Density correction: keypad density OR online densitometer. Record keypad value.'},
+    {id:'E8',t:'No fixed / keypad values for P or T (all live transmitter inputs)'},
+    {id:'E9',t:'No-flow cut-off value set (record value)'},{id:'E10',t:'Contract hour entered correctly (typically 06:00 hrs per GSA)'},
+    {id:'E11',t:'Pulse input frequency range in FC matches meter operating frequency output'},
+  ]},
+  {sec:'F',title:'Calibration & Proving (OIML R117 / FCRI / GSA)',items:[
+    {id:'F1',t:'Present calibration frequency being followed per COSA/GSA'},
+    {id:'F2',t:'Calibration / proving method: Ball prover / Pipe prover / Coriolis master / FCRI'},
+    {id:'F3',t:'Prover / master meter last calibrated at FCRI (date)'},
+    {id:'F4',t:'Calibration at minimum 5 flow rates (Qmin, 25%, 50%, 75%, Qmax)'},
+    {id:'F5',t:'K-factor / MF comparison: as-found vs. as-left deviation recorded'},
+    {id:'F6',t:'Unmeasured liquid/fluid during calibration quantified and reported'},
+    {id:'F7',t:'Seal nos. (as-found AND as-left) documented in calibration report'},
+    {id:'F8',t:'SAP ZPMCALIB record generated'},{id:'F9',t:'Master calibration instruments (PT, TT, density) NABL-traceable (ISO 17025)'},
+    {id:'F10',t:'Flow computer validation with licensed software (Kelton / equivalent)'},
+  ]},
+  {sec:'G',title:'Documentation & SOP',items:[
+    {id:'G1',t:'Approved SOP for TFM calibration available at plant'},{id:'G2',t:'Approved SOP for TFM maintenance available'},
+    {id:'G3',t:'COSA / GSA document available at installation'},{id:'G4',t:'TFM spares (pickup coil, rotor, bearings, gaskets) available on site'},
+    {id:'G5',t:'Existing FC and turbine model within OEM active lifecycle (not obsolete)'},
+  ]},
+  {sec:'H',title:'General / Safety',items:[
+    {id:'H1',t:'All instruments (PT, TT, FC, pickup coil) suitable for hazardous area (Ex cert.)'},
+    {id:'H2',t:'Bypass valves positively blinded when meter in service'},
+    {id:'H3',t:'Metering skid earthed (min. 2 earth pits) and elevated from ground'},
+    {id:'H4',t:'Alarms configured for min/max flow, over-speed, P and T deviation'},
+    {id:'H5',t:'Local display of PT, TT, FC, pulse counter working'},
+  ]},
+],
+Flare:[
+  {sec:'A',title:'Identification',items:[{id:'A1',t:'Make / Model / Serial No. / Meter type (TFM / USM / Pitot / Vortex)'},{id:'A2',t:'Line size (inches). Upstream straight run ≥ 10D confirmed.'},{id:'A3',t:'Flow conditioner installed (Yes/No)'}]},
+  {sec:'B',title:'Operating Conditions',items:[{id:'B1',t:'Current flare flow rate reading. Consistent with pilot status?'},{id:'B2',t:'Operating P and T range entered in FC — match actual flare conditions'},{id:'B3',t:'Liquid / condensate carryover risk: knockout drum upstream working?'}]},
+  {sec:'C',title:'Secondary Instruments & FC',items:[
+    {id:'C1',t:'PT and TT installed and working. Cal. certificates available (NABL).'},{id:'C2',t:'FC / integrator: Make / Model. Audit trail available.'},
+    {id:'C3',t:'Flare gas composition (MW, density, H₂, CO₂) entered in FC'},{id:'C4',t:'No-flow cut-off set correctly — must capture pilot flame flow'},
+    {id:'C5',t:'FC integrated to SCADA / CEMS. SAP PRA auto-pickup.'},{id:'C6',t:'UPS on FC. All instruments earthed.'},
+  ]},
+  {sec:'D',title:'Diagnostics [USM only]',items:[{id:'D1',t:'SOS per path recorded — spread within acceptable limits (< 1 m/s)'},{id:'D2',t:'All paths transmitting. No active path-failure alarms.'}]},
+  {sec:'E',title:'Diagnostics [Thermal / TFM only]',items:[{id:'E1',t:'Reference gas composition entered (MW, Cp/Cv, H₂ fraction)'},{id:'E2',t:'Sensor element clean — no fouling or corrosion'}]},
+  {sec:'F',title:'Calibration',items:[{id:'F1',t:'Last calibration date. Next due date. Method (in-situ dry cal / lab).'},{id:'F2',t:'Calibration reference gas: composition stated in calibration report'}]},
+  {sec:'G',title:'Documentation & Safety',items:[{id:'G1',t:'SOP for calibration and maintenance available at plant'},{id:'G2',t:'All instruments Ex-rated for hazardous area. Meter within OEM active lifecycle.'},{id:'G3',t:'Alarms configured: over-range, path/sensor failure, pilot loss'}]},
+],
+GC:[
+  {sec:'A',title:'Instrument Identification',items:[
+    {id:'A1',t:'GC Make / Model / Serial No.'},{id:'A2',t:'GC type: C6+ / C9+ / Extended (state number of components)'},
+    {id:'A3',t:'GC tag no. and installation location'},{id:'A4',t:'Sample probe: Make / Model / Serial No.'},
+    {id:'A5',t:'Sampling pressure (kPa / kg/cm²) — confirm within GC spec'},{id:'A6',t:'GC connected to FC / SCADA / DCS — confirm tag and protocol'},{id:'A7',t:'GC earthed for electrical safety'},
+  ]},
+  {sec:'B',title:'Calibration & Operation',items:[
+    {id:'B1',t:'GC calibration mode: Auto / Manual'},{id:'B2',t:'GC calibration frequency (daily / weekly / fortnightly)'},
+    {id:'B3',t:'Calibration gas composition certificate available (NABL / ISO 17025)'},{id:'B4',t:'Calibration gas certificate: still within validity period?'},
+    {id:'B5',t:'Carrier gas certificate available'},{id:'B6',t:'Repeatability test — all components within ISO 10723 limits'},
+    {id:'B7',t:'Carrier gas / calibration gas cylinders properly installed — no leakage'},{id:'B8',t:'Pressure regulators at recommended pressure'},
+    {id:'B9',t:'Calculations based on AGA-8 Ed.2017 AND ISO 6976:2016'},{id:'B10',t:'GC alarm and event log — available and downloadable'},{id:'B11',t:'Data history of last 7 days available'},
+  ]},
+  {sec:'C',title:'Sample Handling',items:[
+    {id:'C1',t:'Sample conditioning system (pressure regulator, filter, heater) working'},{id:'C2',t:'Sample probe installed to capture representative sample (not near wall/bend)'},
+    {id:'C3',t:'Sample line insulated / heat-traced to prevent condensation'},{id:'C4',t:'Sample probe last cleaned / inspected date'},
+  ]},
+  {sec:'D',title:'GC Output & Integration',items:[
+    {id:'D1',t:'GC analysis interval matches GSA (every 2 min / 5 min / other)'},{id:'D2',t:'GC auto-updates gas analysis parameters in FC (Yes/No)'},
+    {id:'D3',t:'Fortnightly gas analysis update in FC: 1st and 16th of every month per GSA'},{id:'D4',t:'GC connected to SCADA — trend of GC components available'},
+    {id:'D5',t:'Gross calorific value (GCV/HHV) calculation per ISO 6976 — confirm'},
+  ]},
+  {sec:'E',title:'Documentation',items:[
+    {id:'E1',t:'GC calibration and repeatability report available'},{id:'E2',t:'Chromatogram of last calibration — available and reviewed'},
+    {id:'E3',t:'Chromatograms of last 3 consecutive analyses — available'},{id:'E4',t:'SOP for GC calibration and maintenance — available at plant'},
+    {id:'E5',t:'Log of major maintenance on GC'},{id:'E6',t:'GC calibration gas and carrier gas records (NABL-traceable)'},
+  ]},
+],
+Weighbridge:[
+  {sec:'A',title:'Identification',items:[{id:'A1',t:'Make / Model / Serial No.'},{id:'A2',t:'Type: Road / Rail'},{id:'A3',t:'Number of load cells and resolution'},{id:'A4',t:'Maximum capacity (tonnes)'},{id:'A5',t:'Calibration frequency (annual as per Legal Metrology Act)'}]},
+  {sec:'B',title:'Calibration & Legal Compliance',items:[{id:'B1',t:'Last calibration date'},{id:'B2',t:'Calibration certificate valid (Yes/No). Certificate expiry date.'},{id:'B3',t:'Calibrating agency: Weights & Measures Dept. (official inspector)'},{id:'B4',t:'Calibration reference weights (stainless steel): NABL-traceable'},{id:'B5',t:'SAP PM auto-calibration order generated (Yes/No)'}]},
+  {sec:'C',title:'Hardware Check',items:[{id:'C1',t:'Load cells — no physical damage, corrosion, or moisture ingress'},{id:'C2',t:'Junction box sealed — no moisture, cable damage'},{id:'C3',t:'Weighing platform — clean, level, no debris affecting measurement'},{id:'C4',t:'UPS / power supply for indicator'},{id:'C5',t:'AMC: name of vendor, AMC validity date'}]},
+  {sec:'D',title:'Documentation',items:[{id:'D1',t:'Recent calibration certificate available on site'},{id:'D2',t:'Last weighing report (tare weight and final weight) generated'},{id:'D3',t:'SOP for calibration — available'},{id:'D4',t:'SOP for maintenance — available'},{id:'D5',t:'Spares (load cells, indicator) available'}]},
+],
+};
+
+// ── DEFAULT STATE ───────────────────────────────────────────────
+function defaultState(){return{
+  activePage:'cover',
+  cover:{reportNo:'',dateAudit:'',dateReport:'',installations:'',fromName:'',fromDesig:'',
+    auditors:[{name:'',desig:'',cpf:'',contact:''}],
+    icea:[{name:'',desig:'',cpf:'',contact:''}],
+    icei:[{name:'',desig:'',cpf:'',contact:''}],
+    instReps:[{inst:'',name:'',desig:'',cpf:''}]},
+  assetData:{rows:[
+    {desc:'Crude Production',value:'',unit:''},{desc:'Crude Sales',value:'',unit:''},
+    {desc:'Gas Production',value:'',unit:''},{desc:'Gas Sales',value:'',unit:''},
+    {desc:'Gas Sales through Orifice Meters',value:'',unit:''},{desc:'Gas Sales through USM',value:'',unit:''},
+    {desc:'',value:'',unit:''},{desc:'',value:'',unit:''},
+  ]},
+  description:{meterList:[],calSchedules:{},calTags:{},
+    summary:{custGasT:'',custGasW:'',custGasNW:'',custGasC:'',custGasNC:'',
+      custOilT:'',custOilW:'',custOilNW:'',custOilC:'',custOilNC:'',
+      custConT:'',custConW:'',custConNW:'',custConC:'',custConNC:'',
+      prodGasT:'',prodGasW:'',prodGasNW:'',prodGasC:'',prodGasNC:'',
+      prodOilT:'',prodOilW:'',prodOilNW:'',prodOilC:'',prodOilNC:'',
+      wbT:'',wbW:'',wbNW:'',wbC:'',wbNC:'',
+      totalCTM:'',compliantCTM:'',critNC:'',highNC:'',modNC:'',atrPending:''}},
+  observations:[],meters:{},activeMeters:{},
+};}
+
+let state=defaultState();
+
+// ── PERSISTENCE ─────────────────────────────────────────────────
+function loadData(){
+  try{const s=localStorage.getItem('ongc_v5');if(s){state=JSON.parse(s);
+    if(!state.description.calSchedules)state.description.calSchedules={};
+    if(!state.description.calTags)state.description.calTags={};
+  }}catch(e){}
+  METER_TYPES.forEach(t=>{if(!state.meters[t])state.meters[t]=[];if(state.activeMeters[t]===undefined)state.activeMeters[t]=0;});
+  if(!state.assetData||!state.assetData.rows)state.assetData=defaultState().assetData;
+}
+
+function saveData(quiet){
+  localStorage.setItem('ongc_v5',JSON.stringify(state));
+  if(!quiet)showToast('✓ Saved to device');
+}
+
+function resetAll(){
+  if(!confirm('Reset ALL data? This cannot be undone.'))return;
+  localStorage.removeItem('ongc_v5');
+  state=defaultState();
+  METER_TYPES.forEach(t=>{state.meters[t]=[];state.activeMeters[t]=0;});
+  activeMeterType='Orifice';
+  navigate('cover');showToast('✓ All data reset');
+}
+
+// ── ROUTING ─────────────────────────────────────────────────────
+function navigate(p){state.activePage=p;renderNav();renderPage();}
+
+function renderNav(){
+  document.getElementById('navTabs').innerHTML=PAGES.map(p=>
+    `<div class="tab ${state.activePage===p.id?'active':''}" onclick="navigate('${p.id}')">${p.label}</div>`
+  ).join('');
+}
+
+function renderPage(){
+  const el=document.getElementById('mainContent');
+  if(state.activePage==='cover')el.innerHTML=renderCover();
+  else if(state.activePage==='data')el.innerHTML=renderAssetData();
+  else if(state.activePage==='desc')el.innerHTML=renderDescription();
+  else if(state.activePage==='meters')el.innerHTML=renderMetersPage();
+  else if(state.activePage==='obs')el.innerHTML=renderObservations();
+  attachListeners();
+  if(state.activePage==='meters')setTimeout(()=>renderMTC(activeMeterType),0);
+}
+
+// ── COVER ───────────────────────────────────────────────────────
+function renderCover(){const c=state.cover;return`
+  <div class="cs-section"><div class="ptitle">Report Details</div>
+    <div class="frow"><div><div class="fl">Report No.</div><input class="fi" data-path="cover.reportNo" value="${e(c.reportNo)}" placeholder="e.g. TA-EA/2026/01"></div>
+    <div><div class="fl">Date of Audit</div><input type="date" class="fi" data-path="cover.dateAudit" value="${e(c.dateAudit)}"></div></div>
+    <div class="frow"><div><div class="fl">Date of Report</div><input type="date" class="fi" data-path="cover.dateReport" value="${e(c.dateReport)}"></div>
+    <div><div class="fl">Installation(s)</div><input class="fi" data-path="cover.installations" value="${e(c.installations)}" placeholder="e.g. Gandhar, Ankleshwar"></div></div>
+    <div class="frow"><div><div class="fl">From (Name)</div><input class="fi" data-path="cover.fromName" value="${e(c.fromName)}" placeholder="Name"></div>
+    <div><div class="fl">Designation</div><input class="fi" data-path="cover.fromDesig" value="${e(c.fromDesig)}" placeholder="Designation"></div></div>
+  </div>
+  ${rPS('Auditors','cover.auditors',c.auditors,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
+  ${rPS('Asset I/c TA-EA','cover.icea',c.icea,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
+  ${rPS('Asset I/c Instrumentation','cover.icei',c.icei,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
+  ${rPS('Installation Representatives','cover.instReps',c.instReps,['inst','name','desig','cpf'],['Installation','Name','Designation','CPF No.'])}
+`;}
+
+function rPS(title,path,rows,keys,labels){return`<div class="cs-section"><div class="ptitle">${title}</div>
+  ${rows.map((r,i)=>`<div style="display:grid;grid-template-columns:repeat(${keys.length},1fr);gap:6px;margin-bottom:6px">
+    ${keys.map((k,j)=>`<div>${i===0?`<div class="fl">${labels[j]}</div>`:''}<input class="fi" data-path="${path}[${i}].${k}" value="${e(r[k]||'')}" placeholder="${labels[j]}"></div>`).join('')}
+  </div>`).join('')}
+  <button class="add-obs" onclick="addPR('${path}','${keys.join(',')}')">+ Add Row</button></div>`;}
+
+function addPR(path,ks){const keys=ks.split(','),obj={};keys.forEach(k=>obj[k]='');
+  const pts=path.split('.');let ref=state;for(let i=0;i<pts.length-1;i++)ref=ref[pts[i]];
+  ref[pts[pts.length-1]].push(obj);renderPage();}
+
+// ── ASSET DATA ──────────────────────────────────────────────────
+function renderAssetData(){const rows=state.assetData.rows;return`
+  <div class="ptitle">Asset Data</div>
+  <div style="overflow-x:auto"><table class="dt" style="min-width:360px">
+    <thead><tr><th>#</th><th>Description</th><th>Approx. Value / Day</th><th>Unit</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr>
+      <td style="color:var(--text2);font-size:11px;width:26px">${i+1}</td>
+      <td><input data-path="assetData.rows[${i}].desc" value="${e(r.desc)}" placeholder="Description"></td>
+      <td><input data-path="assetData.rows[${i}].value" value="${e(r.value)}" placeholder="Value"></td>
+      <td><input data-path="assetData.rows[${i}].unit" value="${e(r.unit)}" placeholder="Unit" style="max-width:70px"></td>
+    </tr>`).join('')}</tbody></table></div>
+  <button class="add-row" onclick="addAR()">+ Add Row</button>`;}
+
+function addAR(){state.assetData.rows.push({desc:'',value:'',unit:''});renderPage();}
+
+// ── DESCRIPTION ─────────────────────────────────────────────────
+function renderDescription(){
+  const ml=state.description.meterList,snap=state.description.summary;
+  let html=`<div class="ptitle">Flow Meter Details</div>
+  <div style="overflow-x:auto"><table class="dt" style="min-width:820px">
+    <thead><tr><th>S.N.</th><th>Installation</th><th>Description</th><th>Meter Type</th><th>Tag No.</th><th>Service</th><th>Purpose</th><th>Last Cal.</th><th>Cal. Freq.</th><th>Remarks</th></tr></thead>
+    <tbody>${ml.map((r,i)=>`<tr>
+      <td style="color:var(--text2);font-size:11px;width:22px">${i+1}</td>
+      <td><input data-path="description.meterList[${i}].inst" value="${e(r.inst||'')}" placeholder="Installation"></td>
+      <td><input data-path="description.meterList[${i}].desc" value="${e(r.desc||'')}" placeholder="Description"></td>
+      <td><select data-path="description.meterList[${i}].type">${['','Orifice','USM','MFM','TFM','Flare Meter','GC','Weighbridge','Other'].map(o=>`<option ${r.type===o?'selected':''}>${o}</option>`).join('')}</select></td>
+      <td><input data-path="description.meterList[${i}].tag" value="${e(r.tag||'')}" placeholder="Tag No."></td>
+      <td><select data-path="description.meterList[${i}].service">${['','Gas','Oil','Condensate','LPG','C2C3','Other'].map(o=>`<option ${r.service===o?'selected':''}>${o}</option>`).join('')}</select></td>
+      <td><select data-path="description.meterList[${i}].purpose">${['','CTM','PA','Other'].map(o=>`<option ${r.purpose===o?'selected':''}>${o}</option>`).join('')}</select></td>
+      <td><input type="date" data-path="description.meterList[${i}].lastCal" value="${e(r.lastCal||'')}"></td>
+      <td><input data-path="description.meterList[${i}].freq" value="${e(r.freq||'')}" placeholder="Frequency"></td>
+      <td><input data-path="description.meterList[${i}].remarks" value="${e(r.remarks||'')}" placeholder="Remarks"></td>
+    </tr>`).join('')}</tbody></table></div>
+  <button class="add-row" onclick="addDR()">+ Add Meter</button>`;
+
+  // Cal Schedule Tables
+  html+=`<div style="margin-top:18px"><div class="ptitle">Calibration Schedules & Compliance</div>`;
+  CAL_SCHEDULES.forEach(sched=>{
+    const tags=state.description.calTags[sched.key]||['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
+    html+=`<div class="sc open" id="sched_${sched.key}" style="margin-bottom:11px">
+      <div class="sh" onclick="toggleSec('sched_${sched.key}')">
+        <div><div class="sl">Cal. Schedule</div><div class="st">${sched.label}</div></div>
+        <span class="sv">⌃</span>
+      </div>
+      <div class="sb">
+        <div class="fl" style="margin-bottom:5px">${sched.tagLabel||'Meter Tags'}</div>
+        <div class="tagmgr">
+          ${tags.map((t,ti)=>`<span class="tpill">${e(t)}<button class="trm" onclick="removeTag('${sched.key}',${ti})">×</button></span>`).join('')}
+          <button class="add-tag" onclick="addTag('${sched.key}')">+ Add Tag</button>
+        </div>
+        <div style="overflow-x:auto"><table class="st-table">
+          <thead><tr><th>Activity</th><th>Schedule</th>${tags.map(t=>`<th>${e(t)}</th>`).join('')}</tr></thead>
+          <tbody>${sched.rows.map((row,ri)=>`<tr>
+            <td>${e(row.a)}</td><td>${e(row.s)}</td>
+            ${tags.map((_,ti)=>{const k=`${sched.key}_${ri}_${ti}`,v=state.description.calSchedules[k]||'';
+              return `<td><select onchange="setCS('${sched.key}',${ri},${ti},this.value)">${COMP.map(o=>`<option ${v===o?'selected':''}>${o}</option>`).join('')}</select></td>`;
+            }).join('')}
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div></div>`;
+  });
+  html+=`</div>`;
+
+  // Summary
+  const SR=[['custGas','Custody meter (Gas)'],['custOil','Custody meter (Oil)'],['custCon','Custody meter (Condensate/LPG/C2C3)'],['prodGas','Production meter (Gas)'],['prodOil','Production meter (Oil)'],['wb','Weighbridge']];
+  html+=`<div style="margin-top:18px"><div class="ptitle">Audited Flow Meter Summary</div>
+  <div style="overflow-x:auto"><table class="dt" style="min-width:540px">
+    <thead><tr><th>Sr.</th><th>Meter Type</th><th>Total</th><th>Working</th><th>Not Working</th><th>Calibrated</th><th>Not Calibrated</th></tr></thead>
+    <tbody>${SR.map(([k,label],i)=>`<tr><td style="color:var(--text2)">${i+1}</td><td style="font-size:12px">${label}</td>
+      ${['T','W','NW','C','NC'].map(sf=>`<td><input data-path="description.summary.${k}${sf}" value="${e(snap[k+sf]||'')}" placeholder="-"></td>`).join('')}
+    </tr>`).join('')}</tbody></table></div></div>`;
+
+  html+=`<div style="margin-top:14px"><div class="ptitle">Observation Snapshot</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+    ${[['totalCTM','Total CTMs Audited'],['compliantCTM','Compliant CTMs'],['critNC','Critical NCs'],['highNC','High NCs'],['modNC','Moderate NCs'],['atrPending','Past ATR Pending']].map(([k,l])=>
+      `<div><div class="fl">${l}</div><input class="fi" data-path="description.summary.${k}" value="${e(snap[k]||'')}"></div>`).join('')}
+  </div></div>`;
+  return html;
+}
+
+function addDR(){state.description.meterList.push({inst:'',desc:'',type:'',tag:'',service:'',purpose:'',lastCal:'',freq:'',remarks:''});renderPage();}
+function addTag(key){if(!state.description.calTags[key])state.description.calTags[key]=['Meter Tag 1','Meter Tag 2','Meter Tag 3'];const n=state.description.calTags[key].length+1;state.description.calTags[key].push('Meter Tag '+n);saveData(true);renderPage();}
+function removeTag(key,ti){if(!state.description.calTags[key])return;state.description.calTags[key].splice(ti,1);saveData(true);renderPage();}
+function setCS(key,ri,ti,val){state.description.calSchedules[`${key}_${ri}_${ti}`]=val;saveData(true);}
+
+// ── METERS ──────────────────────────────────────────────────────
+let activeMeterType='Orifice';
+
+function renderMetersPage(){return`<div class="ptitle">Select Meter Type</div>
+  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">
+    ${METER_TYPES.map(t=>`<button class="mt ${activeMeterType===t?'am':''}" onclick="switchMT('${t}')">
+      ${t}${state.meters[t]&&state.meters[t].length?` <span style="background:var(--accent);color:var(--navy);border-radius:9px;padding:1px 5px;font-size:10px">${state.meters[t].length}</span>`:''}
+    </button>`).join('')}
+  </div>
+  <div id="mtc"></div>`;}
+
+function switchMT(type){activeMeterType=type;renderPage();}
+
+function renderMTC(type){
+  const el=document.getElementById('mtc');if(!el)return;
+  const meters=state.meters[type]||[];
+  if(!meters.length){el.innerHTML=`<div class="empty"><div class="icon">🔧</div>
+    <p>No <strong>${type}</strong> meters added yet.<br>Tap below to add the first one.</p>
+    <button class="add-m" style="margin-top:13px" onclick="addM('${type}')">+ Add ${type} Meter</button></div>`;return;}
+  const idx=Math.min(state.activeMeters[type]||0,meters.length-1);
+  state.activeMeters[type]=idx;
+  const m=meters[idx];
+  if(!m.data)m.data={};
+
+  el.innerHTML=`<div class="mm">
+    <div class="mm-title">${type} Meters</div>
+    <div class="mt-wrap">
+      ${meters.map((mx,i)=>`<div class="mt ${i===idx?'am':''}" onclick="selM('${type}',${i})">
+        ${e(mx.label||type+' '+(i+1))}
+        <button class="db" onclick="event.stopPropagation();delM('${type}',${i})">×</button>
+      </div>`).join('')}
+      <button class="add-m" onclick="addM('${type}')">+ Add</button>
+    </div>
+    <div class="mhf">
+      <div><div class="fl">Meter Label / Tag</div><input class="ci" placeholder="e.g. FT-101" value="${e(m.label||'')}" oninput="setMF('${type}',${idx},'label',this.value)"></div>
+      <div><div class="fl">Installation</div><input class="ci" placeholder="Installation" value="${e(m.header.inst||'')}" oninput="setMF('${type}',${idx},'inst',this.value)"></div>
+      <div><div class="fl">Service</div><input class="ci" placeholder="Gas / Oil / Condensate" value="${e(m.header.svc||'')}" oninput="setMF('${type}',${idx},'svc',this.value)"></div>
+      <div><div class="fl">Consumer</div><input class="ci" placeholder="Consumer" value="${e(m.header.consumer||'')}" oninput="setMF('${type}',${idx},'consumer',this.value)"></div>
+      <div><div class="fl">Make / Model / Serial No.</div><input class="ci" placeholder="Make / Model / S/N" value="${e(m.header.make||'')}" oninput="setMF('${type}',${idx},'make',this.value)"></div>
+      <div><div class="fl">Meter Size</div><input class="ci" placeholder='e.g. 4" / DN100' value="${e(m.header.size||'')}" oninput="setMF('${type}',${idx},'size',this.value)"></div>
+    </div>
+  </div>
+  ${renderProg(type,idx)}
+  ${renderCL(type,idx)}`;
+
+  // *** ROOT FIX: attach listeners directly to the injected inputs ***
+  el.querySelectorAll('[data-mtype]').forEach(inp=>{
+    ['input','change'].forEach(evt=>inp.addEventListener(evt,ev=>{
+      const {mtype,midx,cpid,field}=ev.target.dataset;
+      const mx=state.meters[mtype][parseInt(midx)];
+      if(!mx.data)mx.data={};
+      if(!mx.data[cpid])mx.data[cpid]={val:'',rem:''};
+      mx.data[cpid][field]=ev.target.value;
+      saveData(true);
+    }));
+  });
+}
+
+function setMF(type,idx,field,val){
+  const m=state.meters[type][idx];
+  if(field==='label')m.label=val;else m.header[field]=val;
+  saveData(true);
+}
+
+function renderProg(type,idx){
+  const cl=CL[type]||[];const m=state.meters[type][idx];
+  let total=0,filled=0;
+  cl.forEach(sec=>sec.items.forEach(item=>{total++;const d=m.data&&m.data[item.id];if(d&&(d.val||d.rem))filled++;}));
+  const pct=total?Math.round(filled/total*100):0;
+  return`<div class="pw"><div class="pl"><span>Completion</span><span>${filled}/${total} checkpoints (${pct}%)</span></div>
+    <div class="pb"><div class="pf" style="width:${pct}%"></div></div></div>`;}
+
+function renderCL(type,idx){
+  const sections=CL[type]||[];const m=state.meters[type][idx];if(!m.data)m.data={};
+  return sections.map((sec,si)=>`
+    <div class="sc ${si===0?'open':''}" id="sec_${type}_${idx}_${si}">
+      <div class="sh" onclick="toggleSec('sec_${type}_${idx}_${si}')">
+        <div><div class="sl">Section ${sec.sec}</div><div class="st">${sec.title}</div></div>
+        <span class="sv">⌃</span>
+      </div>
+      <div class="sb">${sec.items.map(item=>{
+        const d=m.data[item.id]||{val:'',rem:''};
+        return`<div class="cp-row">
+          <div><span class="cp-id">${item.id}</span><span class="cp-text"> ${item.t}</span></div>
+          <div class="cp-grid">
+            <div><div style="font-size:10px;color:var(--text2);margin-bottom:2px">Detail / Value</div>
+              <input class="ci" placeholder="Enter value..." value="${e(d.val||'')}" data-mtype="${type}" data-midx="${idx}" data-cpid="${item.id}" data-field="val"></div>
+            <div><div style="font-size:10px;color:var(--text2);margin-bottom:2px">Remarks</div>
+              <input class="ci" placeholder="Remarks..." value="${e(d.rem||'')}" data-mtype="${type}" data-midx="${idx}" data-cpid="${item.id}" data-field="rem"></div>
+          </div></div>`;}).join('')}
+      </div></div>`).join('');}
+
+function addM(type){
+  if(!state.meters[type])state.meters[type]=[];
+  const n=state.meters[type].length+1;
+  state.meters[type].push({label:type+' '+n,header:{inst:'',svc:'',consumer:'',make:'',size:''},data:{}});
+  state.activeMeters[type]=state.meters[type].length-1;
+  saveData(true);renderPage();
+}
+function selM(type,idx){state.activeMeters[type]=idx;renderPage();}
+function delM(type,idx){
+  if(!confirm('Delete this meter and all its data?'))return;
+  state.meters[type].splice(idx,1);
+  state.activeMeters[type]=Math.max(0,(state.activeMeters[type]||0)-1);
+  saveData(true);renderPage();
+}
+function toggleSec(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+
+// ── OBSERVATIONS ────────────────────────────────────────────────
+function renderObservations(){const obs=state.observations;return`
+  <div class="ptitle">Observations & Recommendations</div>
+  ${obs.map((o,i)=>`<div class="obs-row">
+    <button class="obs-del" onclick="delObs(${i})">×</button>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:7px">OBS ${i+1}</div>
+    <div class="obs-grid">
+      <div><div class="fl">Meter Tag / Location</div><input class="fi" data-path="observations[${i}].tag" value="${e(o.tag||'')}" placeholder="Tag / Location"></div>
+      <div><div class="fl">Category</div><select class="fi" data-path="observations[${i}].cat">${OBS_CAT.map(v=>`<option ${o.cat===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div><div class="fl">Priority</div><select class="fi" data-path="observations[${i}].priority">${OBS_PRI.map(v=>`<option ${o.priority===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div><div class="fl">Responsible Workcentre</div><input class="fi" data-path="observations[${i}].workcentre" value="${e(o.workcentre||'')}" placeholder="Workcentre"></div>
+    </div>
+    <div style="margin-top:7px"><div class="fl">Audit Observation</div><textarea class="fi" data-path="observations[${i}].obs" placeholder="Describe the observation...">${e(o.obs||'')}</textarea></div>
+    <div style="margin-top:7px"><div class="fl">Recommended Action</div><textarea class="fi" data-path="observations[${i}].action" placeholder="Recommended action...">${e(o.action||'')}</textarea></div>
+  </div>`).join('')}
+  <button class="add-obs" onclick="addObs()">+ Add Observation</button>`;}
+
+function addObs(){state.observations.push({tag:'',obs:'',cat:'',priority:'',action:'',workcentre:''});renderPage();setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),80);}
+function delObs(i){state.observations.splice(i,1);renderPage();}
+
+// ── LISTENERS ───────────────────────────────────────────────────
+function attachListeners(){
+  document.querySelectorAll('[data-path]').forEach(el=>{
+    const evt=el.tagName==='SELECT'||el.type==='date'?'change':'input';
+    el.addEventListener(evt,ev=>{setPath(state,ev.target.dataset.path,ev.target.value);saveData(true);});
+  });
+}
+
+function setPath(obj,path,value){
+  const pts=path.replace(/\[(\d+)\]/g,'.$1').split('.');let ref=obj;
+  for(let i=0;i<pts.length-1;i++){if(ref[pts[i]]===undefined)ref[pts[i]]={};ref=ref[pts[i]];}
+  ref[pts[pts.length-1]]=value;
+}
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── XLSX EXPORT ─────────────────────────────────────────────────
+function exportXLSX(){
+  saveData(true);const wb=XLSX.utils.book_new();const c=state.cover;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['','ONGC FLOW METER AUDIT TEAM'],[''],['Report No.',c.reportNo],['Date of Audit',c.dateAudit],
+    ['Date of Report',c.dateReport],['Installations',c.installations],[''],
+    ['From:',c.fromName+(c.fromDesig?' — '+c.fromDesig:'')],[''],
+    ['Subject:','Technical Audit Report of Custody Transfer Flow meters of '+c.installations],[''],
+    ['Sir,','Technical Audit of Flow meters of '+c.installations+' was conducted on '+c.dateAudit+'.'],
+    [''],['Regards'],[''],['(NAME)',c.fromName],['(DESIGNATION)',c.fromDesig],[''],['Copy to:'],
+    ['1','Shri K N Ramesh, ED - CTS, ONGC, New Delhi','76132'],['2','Shri Sanjeev Kakar, CGM(M) - Head TA-EA, New Delhi','78590'],
+    ['3','Head Maintenance'],['4','Surface Manager'],['5','Area Manager'],['6','I/c Instrumentation'],
+    ['7','I/c TA-EA'],['8','LM'],['9','Flow Meter Audit Team Members'],
+  ]),'Cover Letter');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['ONGC'],['Flow Meter Audit Team'],[''],['Flow Meter Audit Report'],['Year: 2026-27'],[''],
+    ['Document No',c.reportNo],['Date of Audit',c.dateAudit],['Date of Report',c.dateReport],['Installations',c.installations],[''],
+    ['NAME & DESIGNATION OF AUDITOR'],['SL NO','NAME','DESIGNATION','CPF NO','CONTACT NO.'],
+    ...c.auditors.map((r,i)=>[i+1,r.name,r.desig,r.cpf,r.contact]),[''],
+    ['NAME & DESIGNATION OF ASSET I/c TA-EA'],['SL NO','NAME','DESIGNATION','CPF NO','CONTACT NO.'],
+    ...c.icea.map((r,i)=>[i+1,r.name,r.desig,r.cpf,r.contact]),[''],
+    ['NAME & DESIGNATION OF ASSET I/c INSTRUMENTATION'],['SL NO','NAME','DESIGNATION','CPF NO','CONTACT NO.'],
+    ...c.icei.map((r,i)=>[i+1,r.name,r.desig,r.cpf,r.contact]),[''],
+    ['NAME & DESIGNATION OF INSTALLATION REPRESENTATIVE'],['SL NO','INSTALLATION','NAME','DESIGNATION','CPF NO'],
+    ...c.instReps.map((r,i)=>[i+1,r.inst,r.name,r.desig,r.cpf]),
+  ]),'Cover');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['ASSET DATA'],['Description','Approx Asset Data per Day','Unit'],
+    ...state.assetData.rows.map(r=>[r.desc,r.value,r.unit]),
+  ]),'Data');
+  const ds=state.description;
+  const da=[['FLOW METER DETAILS'],['SN','Installation','Flow Meter Description','Meter Type','Tag No.','Service','Purpose','Last Calibration','Cal. Frequency','Remarks'],
+    ...ds.meterList.map((r,i)=>[i+1,r.inst,r.desc,r.type,r.tag,r.service,r.purpose,r.lastCal,r.freq,r.remarks]),['']];
+  CAL_SCHEDULES.forEach(sched=>{
+    const tags=ds.calTags[sched.key]||['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
+    da.push([sched.label+' — Calibration Schedule'],['Activity','Schedule',...tags]);
+    sched.rows.forEach((row,ri)=>da.push([row.a,row.s,...tags.map((_,ti)=>ds.calSchedules[`${sched.key}_${ri}_${ti}`]||'')]));
+    da.push(['']);
+  });
+  const SR=[['custGas','Custody meter (Gas)'],['custOil','Custody meter (Oil)'],['custCon','Custody meter (Condensate/LPG/C2C3)'],['prodGas','Production meter (Gas)'],['prodOil','Production meter (Oil)'],['wb','Weighbridge']];
+  da.push(['AUDITED FLOW METER SUMMARY'],['Sr.No','Meter Type','Total','Working','Not Working','Calibrated','Not Calibrated']);
+  SR.forEach(([k,l],i)=>da.push([i+1,l,ds.summary[k+'T'],ds.summary[k+'W'],ds.summary[k+'NW'],ds.summary[k+'C'],ds.summary[k+'NC']]));
+  da.push([''],['OBSERVATION SNAPSHOT'],['Total CTMs Audited','Compliant CTMs','Critical NCs','High NCs','Moderate NCs','Past ATR Pending'],
+    [ds.summary.totalCTM,ds.summary.compliantCTM,ds.summary.critNC,ds.summary.highNC,ds.summary.modNC,ds.summary.atrPending]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(da),'Description');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['OBSERVATIONS & RECOMMENDATIONS'],['Sl.No','Meter Tag / Location','Audit Observation','Category','Priority','Recommended Action','Responsible Workcentre'],
+    ...state.observations.map((o,i)=>[i+1,o.tag,o.obs,o.cat,o.priority,o.action,o.workcentre]),
+  ]),'Observations & ATR');
+  const SN={Orifice:'Orifice Meter',USM:'USM',MFM:'MFM',TFM:'Turbine Flow Meter (TFM)',Flare:'Flare Meter',GC:'Gas Chromatograph (GC)',Weighbridge:'Weighbridge'};
+  METER_TYPES.forEach(type=>{
+    const meters=state.meters[type]||[];if(!meters.length)return;
+    const cl=CL[type]||[];const aoa=[[`FLOW METER AUDIT CHECKLIST | ${type.toUpperCase()}`]];
+    meters.forEach((m,mi)=>{
+      aoa.push([''],['--- METER '+(mi+1)+': '+(m.label||type+' '+(mi+1))+' ---']);
+      aoa.push(['Installation',m.header.inst],['Service',m.header.svc],['Consumer',m.header.consumer],['Make / Model / Serial No.',m.header.make],['Meter Size',m.header.size],['']);
+      aoa.push(['SN','Checkpoint / Audit Criteria','Detail / Value','Remarks']);
+      cl.forEach(sec=>{aoa.push([sec.sec+'.  '+sec.title]);sec.items.forEach(item=>{const d=(m.data&&m.data[item.id])||{};aoa.push([item.id,item.t,d.val||'',d.rem||'']);});});
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),SN[type].substring(0,31));
+  });
+  XLSX.writeFile(wb,`ONGC_FlowMeter_Audit_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✓ Excel exported!');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+loadData();renderNav();renderPage();
+setInterval(()=>saveData(true),60000);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
