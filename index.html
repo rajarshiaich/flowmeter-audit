@@ -2,146 +2,187 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FM Audit">
 <meta name="theme-color" content="#0a1628">
 <title>ONGC Flow Meter Audit</title>
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{--navy:#0a1628;--navy2:#112240;--navy3:#1a3a5c;--accent:#f5a623;--green:#2ecc71;--red:#e74c3c;--text:#e8edf4;--text2:#8899aa;--border:rgba(255,255,255,0.1);--card:rgba(255,255,255,0.04);--r:10px}
+:root{--navy:#0a1628;--navy2:#112240;--navy3:#1a3a5c;--accent:#f5a623;--green:#2ecc71;--red:#e74c3c;--blue:#3b82f6;--text:#e8edf4;--text2:#8899aa;--border:rgba(255,255,255,.1);--card:rgba(255,255,255,.04);--r:10px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--navy);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
-.header{background:var(--navy2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 14px}
-.header-top{display:flex;align-items:center;justify-content:space-between;height:54px}
-.logo-badge{background:var(--accent);color:var(--navy);font-weight:800;font-size:11px;padding:3px 7px;border-radius:4px}
-.logo-title{font-size:13px;font-weight:600;margin-left:7px}
-.logo-sub{font-size:10px;color:var(--text2);margin-left:7px}
-.hbtns{display:flex;gap:5px}
-.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap}
+/* HEADER */
+.hdr{background:var(--navy2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;padding:0 12px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;height:52px;gap:8px}
+.logo{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.badge{background:var(--accent);color:var(--navy);font-weight:800;font-size:10px;padding:3px 6px;border-radius:4px}
+.logo-text{font-size:13px;font-weight:600}
+.logo-sub{font-size:9px;color:var(--text2);margin-top:1px}
+.hbtns{display:flex;gap:4px;flex-wrap:nowrap}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:3px}
 .btn:active{opacity:.7}
-.btn-export{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
-.btn-reset{background:rgba(231,76,60,.12);border-color:var(--red);color:var(--red)}
-.btn-import{background:rgba(46,204,113,.1);border-color:var(--green);color:var(--green)}
-.nav-tabs{display:flex;overflow-x:auto;gap:4px;padding:7px 0;scrollbar-width:none}
-.nav-tabs::-webkit-scrollbar{display:none}
-.tab{flex-shrink:0;padding:5px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2)}
-.tab.active{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
-.main{padding:14px;max-width:780px;margin:0 auto}
-.ptitle{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px}
-.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
-.sh{padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
-.sl{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.7px;text-transform:uppercase}
+.btn-x{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
+.btn-r{background:rgba(231,76,60,.1);border-color:var(--red);color:var(--red)}
+.btn-i{background:rgba(59,130,246,.15);border-color:var(--blue);color:#60a5fa}
+/* INSTALL BANNER */
+.install-banner{background:linear-gradient(90deg,rgba(59,130,246,.2),rgba(245,166,35,.15));border-bottom:1px solid rgba(59,130,246,.3);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.install-banner p{font-size:11px;color:var(--text);flex:1}
+.install-banner p strong{color:var(--accent)}
+.btn-install{background:var(--blue);border:none;color:#fff;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-banner-close{background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;padding:0 4px}
+/* NAV */
+.nav{display:flex;overflow-x:auto;gap:3px;padding:6px 0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2)}
+.tab.on{background:var(--accent);border-color:var(--accent);color:var(--navy);font-weight:700}
+/* MAIN */
+.main{padding:12px;max-width:820px;margin:0 auto;padding-bottom:40px}
+.ptitle{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px}
+/* CARDS */
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+.sh{padding:10px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.sl{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.6px;text-transform:uppercase}
 .st{font-size:13px;font-weight:600;margin-top:1px}
-.sv{color:var(--text2);font-size:15px;transition:transform .2s;flex-shrink:0;margin-left:6px}
+.sv{color:var(--text2);font-size:14px;transition:transform .2s;margin-left:6px}
 .sc.open .sv{transform:rotate(180deg)}
-.sb{display:none;padding:0 11px 11px}
+.sb{display:none;padding:0 10px 10px}
 .sc.open .sb{display:block}
+/* FIELDS */
 .fl{font-size:10px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
 .fi{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;-webkit-appearance:none}
 .fi:focus{border-color:var(--accent)}
 .fi::placeholder{color:var(--text2)}
-textarea.fi{resize:vertical;min-height:52px;font-family:inherit}
+textarea.fi{resize:vertical;min-height:50px;font-family:inherit}
 select.fi{cursor:pointer}
 select.fi option{background:var(--navy2)}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+/* CHECKPOINTS */
 .cp-row{border-top:1px solid var(--border);padding:8px 0}
 .cp-row:first-child{border-top:none}
 .cp-id{font-size:10px;font-weight:700;color:var(--accent);min-width:24px;display:inline-block}
-.cp-text{font-size:12px;line-height:1.4;margin-bottom:6px}
-.cp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.ci{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:6px 8px;outline:none;-webkit-appearance:none}
+.cp-txt{font-size:12px;line-height:1.4;margin-bottom:6px}
+.cp-g{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ci{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;-webkit-appearance:none}
 .ci:focus{border-color:var(--accent)}
-.ci::placeholder{color:rgba(136,153,170,.55)}
-select.ci{cursor:pointer}
-select.ci option{background:var(--navy2)}
-.mm{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:13px}
-.mm-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
-.mt-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.mt{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);position:relative}
+.ci::placeholder{color:rgba(136,153,170,.5)}
+/* METER MANAGER */
+.mm{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r);padding:11px;margin-bottom:12px}
+.mm-t{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.mt-wrap{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mt{padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);position:relative}
 .mt.am{background:var(--navy3);border-color:var(--accent);color:var(--text)}
 .mt .db{position:absolute;top:-4px;right:-4px;background:var(--red);border:none;color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:none;align-items:center;justify-content:center;cursor:pointer}
 .mt:hover .db{display:flex}
-.add-m{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px dashed var(--accent);background:transparent;color:var(--accent)}
-.mhf{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
-.cs-section{margin-bottom:18px}
-.dt{width:100%;border-collapse:collapse;font-size:12px}
-.dt th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 7px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-.dt td{padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
-.dt td input,.dt td select{width:100%;background:transparent;border:none;color:var(--text);font-size:12px;outline:none;padding:2px 3px;-webkit-appearance:none}
-.dt td select option{background:var(--navy2)}
+.add-m{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px dashed var(--accent);background:transparent;color:var(--accent)}
+.mhf{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+/* TABLES */
+.dt{width:100%;border-collapse:collapse;font-size:11px}
+.dt th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 6px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.dt td{padding:4px 4px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.dt td input,.dt td select{width:100%;background:transparent;border:none;color:var(--text);font-size:11px;outline:none;padding:2px 2px;-webkit-appearance:none;min-width:55px}
 .dt td:focus-within{background:rgba(245,166,35,.07)}
-.add-row{width:100%;padding:7px;border:1px dashed var(--border);background:transparent;color:var(--text2);font-size:12px;border-radius:6px;cursor:pointer;margin-top:6px}
-.st-table{width:100%;border-collapse:collapse;font-size:11px}
-.st-table th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 7px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-.st-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;color:var(--text)}
-.st-table td:nth-child(2){color:var(--text2);font-size:10px;font-style:italic}
-.st-table td select{width:100%;background:var(--navy2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:4px 5px;border-radius:5px;outline:none;cursor:pointer;-webkit-appearance:none}
-.st-table td select option{background:var(--navy2)}
-.tagmgr{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-.tpill{display:inline-flex;align-items:center;gap:3px;background:var(--navy3);border:1px solid var(--border);border-radius:12px;padding:3px 9px;font-size:11px}
-.tpill .trm{background:none;border:none;color:var(--text2);cursor:pointer;font-size:11px;padding:0}
-.tag-edit:focus{outline:1px solid var(--accent);border-radius:3px;background:rgba(245,166,35,.08)!important}
-.add-tag{background:transparent;border:1px dashed var(--border);color:var(--text2);border-radius:12px;padding:3px 9px;font-size:11px;cursor:pointer}
-.obs-row{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;position:relative}
+.add-row{width:100%;padding:6px;border:1px dashed var(--border);background:transparent;color:var(--text2);font-size:11px;border-radius:5px;cursor:pointer;margin-top:5px}
+/* SCHEDULE TABLE */
+.sch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sch{width:100%;border-collapse:collapse;font-size:11px;min-width:400px}
+.sch th{background:var(--navy3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:6px 6px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.sch td{padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;color:var(--text)}
+.sch td:nth-child(2){color:var(--text2);font-size:10px;font-style:italic}
+/* Editable tag header cell */
+.tag-th{background:var(--navy3);padding:4px 3px}
+.tag-th input{width:100%;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);border-radius:4px;color:var(--accent);font-size:10px;font-weight:700;padding:2px 4px;outline:none;text-align:center;min-width:60px}
+.tag-th input:focus{border-color:var(--accent);background:rgba(245,166,35,.2)}
+.sch td select{width:100%;background:var(--navy2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:3px 4px;border-radius:4px;outline:none;cursor:pointer;-webkit-appearance:none;min-width:90px}
+.sch td select option{background:var(--navy2)}
+.add-tag-btn{padding:3px 9px;border-radius:11px;font-size:10px;font-weight:600;cursor:pointer;border:1px dashed rgba(245,166,35,.5);background:transparent;color:var(--accent);margin-left:4px}
+/* OBS */
+.obs-row{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:9px;position:relative}
 .obs-del{position:absolute;top:6px;right:6px;background:transparent;border:none;color:var(--red);cursor:pointer;font-size:15px}
-.obs-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.add-obs{width:100%;padding:8px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:13px;font-weight:600;border-radius:7px;cursor:pointer;margin-top:8px}
-.pw{margin-bottom:13px}
-.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px}
-.pb{height:4px;background:var(--border);border-radius:2px}
+.og{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.add-obs{width:100%;padding:8px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:12px;font-weight:600;border-radius:7px;cursor:pointer;margin-top:8px}
+/* PROGRESS */
+.pw{margin-bottom:12px}
+.pl{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:3px}
+.pb{height:3px;background:var(--border);border-radius:2px}
 .pf{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
-.empty{text-align:center;padding:34px 18px;color:var(--text2)}
-.empty .icon{font-size:36px;margin-bottom:8px}
-.empty p{font-size:13px}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+/* IMPORT */
+.imp-zone{border:2px dashed var(--border);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:12px;position:relative}
+.imp-zone:hover,.imp-zone.drag{border-color:var(--accent);background:rgba(245,166,35,.04)}
+.imp-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.imp-zone .icon{font-size:30px;margin-bottom:6px}
+.imp-zone p{font-size:12px;color:var(--text2)}
+.imp-zone p strong{color:var(--text)}
+.imp-log{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;color:var(--text2);max-height:200px;overflow-y:auto;font-family:monospace;line-height:1.6}
+.imp-log .ok{color:var(--green)}
+.imp-log .warn{color:var(--accent)}
+.imp-log .err{color:var(--red)}
+/* EMPTY */
+.empty{text-align:center;padding:32px 16px;color:var(--text2)}
+.empty .icon{font-size:34px;margin-bottom:7px}
+.empty p{font-size:12px}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
 .toast.show{opacity:1}
-.import-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px}
-.import-box{background:var(--navy2);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto}
-.import-box h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px}
-.import-log{background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;color:var(--text2);max-height:240px;overflow-y:auto;line-height:1.8;white-space:pre-wrap;word-break:break-all}
-.import-log .ok{color:var(--green)}
-.import-log .warn{color:var(--accent)}
-.import-log .err{color:var(--red)}
-.import-close{margin-top:12px;width:100%;padding:9px;background:var(--accent);border:none;border-radius:8px;color:var(--navy);font-weight:700;font-size:13px;cursor:pointer}
-@media(max-width:440px){.cp-grid,.mhf,.frow,.obs-grid{grid-template-columns:1fr}.hbtns .btn{padding:5px 7px;font-size:10px}}
+@media(max-width:440px){.cp-g,.mhf,.frow,.og{grid-template-columns:1fr}.hbtns .btn{padding:4px 6px;font-size:10px}}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="header-top">
-    <div style="display:flex;align-items:center">
-      <span class="logo-badge">ONGC</span>
-      <div><div class="logo-title">Flow Meter Audit</div><div class="logo-sub">Field Checklist · Offline PWA</div></div>
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">
+      <span class="badge">ONGC</span>
+      <div><div class="logo-text">Flow Meter Audit</div><div class="logo-sub">Offline Field Checklist</div></div>
     </div>
     <div class="hbtns">
-      <button class="btn" onclick="saveData()">💾 Save</button>
-      <button class="btn btn-reset" onclick="resetAll()">🗑 Reset</button>
-      <button class="btn btn-import" onclick="triggerImport()" title="Import from Excel">⬆ Import</button>
-      <button class="btn btn-export" onclick="exportXLSX()">⬇ Export</button>
-      <input type="file" id="importFile" accept=".xlsx,.xls" multiple style="display:none" onchange="importXLSX(this.files)">
+      <button class="btn btn-i" onclick="navigate('import')" title="Import Excel">📥 Import</button>
+      <button class="btn" onclick="saveData()">💾</button>
+      <button class="btn btn-r" onclick="resetAll()" title="Reset all data">🗑</button>
+      <button class="btn btn-x" onclick="exportXLSX()">⬇ Export</button>
     </div>
   </div>
-  <div class="nav-tabs" id="navTabs"></div>
+  <div id="installBanner" style="display:none" class="install-banner">
+    <p>📱 <strong>Install as app:</strong> Add to home screen for offline use</p>
+    <button class="btn-install" id="installBtn" onclick="doInstall()">Install</button>
+    <button class="btn-banner-close" onclick="closeBanner()">×</button>
+  </div>
+  <div class="nav" id="navTabs"></div>
 </div>
 <div class="main" id="mainContent"></div>
 <div class="toast" id="toast"></div>
-<div class="import-modal" id="importModal" style="display:none">
-  <div class="import-box">
-    <h3>📥 Excel Import Log</h3>
-    <div class="import-log" id="importLog">Processing...</div>
-    <button class="import-close" onclick="closeImportModal()">Done</button>
-  </div>
-</div>
+
 <script>
-// ── CONSTANTS ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
 const METER_TYPES=['Orifice','USM','MFM','TFM','Flare','GC','Weighbridge'];
-const PAGES=[{id:'cover',label:'📋 Cover'},{id:'data',label:'📊 Asset Data'},{id:'desc',label:'🗂 Description'},{id:'meters',label:'⚙ Meters'},{id:'obs',label:'⚠ Observations'}];
+const PAGES=[
+  {id:'cover',label:'📋 Cover'},
+  {id:'data',label:'📊 Asset Data'},
+  {id:'desc',label:'🗂 Description'},
+  {id:'meters',label:'⚙ Meters'},
+  {id:'obs',label:'⚠ Observations'},
+  {id:'import',label:'📥 Import'},
+];
 const OBS_CAT=['','Construction Deficiency','System Issue','Configuration Error','Calibration Gap','Maintenance Lapse','Security Concern','Upstream Process Issue','Documentation Gap'];
 const OBS_PRI=['','NC - Critical','NC - High','NC - Moderate'];
 const COMP=['','Complied','Not Complied','N/A'];
 
+// Sheet name → meter type mapping for Excel import
+const SHEET_TO_TYPE={
+  'orifice meter':'Orifice','orifice':'Orifice',
+  'usm':'USM','ultrasonic':'USM',
+  'mfm':'MFM','coriolis':'MFM',
+  'turbine flow meter (tfm)':'TFM','turbine flow meter':'TFM','tfm':'TFM','turbine':'TFM',
+  'flare meter':'Flare','flare':'Flare',
+  'gas chromatograph (gc)':'GC','gas chromatograph':'GC','gc':'GC',
+  'weighbridge':'Weighbridge',
+};
+
+// Calibration schedule tables
 const CAL_SCHEDULES=[
   {label:'Orifice Meter',key:'orifice',rows:[
     {a:'Calibration of DPT',s:'Every 3 months or GSA, whichever is lower'},
@@ -179,7 +220,7 @@ const CAL_SCHEDULES=[
   ]},
 ];
 
-// ── CHECKLISTS ──────────────────────────────────────────────────
+// ── FULL CHECKLISTS ──────────────────────────────────────────
 const CL={
 Orifice:[
   {sec:'A',title:'Primary Element — Orifice Plate & Meter Run',items:[
@@ -286,13 +327,13 @@ USM:[
     {id:'A3',t:'Number of independent measurement paths'},{id:'A4',t:'Transducer make / model / serial nos. per path'},
     {id:'A5',t:'Flow conditioner / straightening vane installed (Yes/No/Type)'},{id:'A6',t:'Meter is AGA-9 / OIML R117 compliant'},
     {id:'A7',t:'Upstream straight run ≥ 10D confirmed'},{id:'A8',t:'Downstream straight run ≥ 5D confirmed'},
-    {id:'A9',t:'By-pass available? If yes — positive isolation'},{id:'A10',t:'Operating velocity range: record min/max, confirm within spec'},
+    {id:'A9',t:'By-pass available? Positive isolation if yes'},{id:'A10',t:'Operating velocity range: record min/max, confirm within spec'},
   ]},
   {sec:'B',title:'Transducer & Path Diagnostics',items:[
     {id:'B1',t:'Visual inspection of transducers — no damage, wear, or contamination'},
     {id:'B2',t:'Signal strength / SNR for each path (record per path)'},
     {id:'B3',t:'All measurement paths transmitting correctly (all paths active)'},
-    {id:'B4',t:'SOS per path vs. AGA-10 expected value. Spread: < 0.5 m/s gas; < 2 m/s liquid'},
+    {id:'B4',t:'SOS per path vs. AGA-10 expected. Spread: < 0.5 m/s gas; < 2 m/s liquid'},
     {id:'B5',t:'Velocity profile check — velocity per path and profile correction factor'},
     {id:'B6',t:'Acoustic path integrity indicators / deviation flags — any active alarms?'},
     {id:'B7',t:'Diagnostic data downloaded and saved (velocity profile, SOS, gain, AGC)'},
@@ -301,15 +342,15 @@ USM:[
   ]},
   {sec:'C',title:'Secondary Instruments',items:[
     {id:'C1',t:'PT: Make / Model / Range / Cal. date'},{id:'C2',t:'TT / RTD: Make / Model / Wiring'},
-    {id:'C3',t:'PT, TT calibrated — certificates available'},{id:'C4',t:'RTD/TT calibrated with temp bath — deviation < ±0.2°C'},
-    {id:'C5',t:'All instruments earthed to instrument earth pit'},{id:'C6',t:'Isolation valve seals: as-found and as-left seal nos. recorded'},
+    {id:'C3',t:'PT, TT calibrated — certificates available'},{id:'C4',t:'RTD/TT with temp bath — deviation < ±0.2°C'},
+    {id:'C5',t:'All instruments earthed'},{id:'C6',t:'Isolation valve seals: as-found and as-left recorded'},
   ]},
   {sec:'D',title:'Flow Computer',items:[
     {id:'D1',t:'FC Make / Model / Firmware Version'},{id:'D2',t:'FC API 21.1 certified. NMI / OIML-R137 on site.'},
     {id:'D3',t:'FC security / password enabled'},{id:'D4',t:'FC calibration port sealed'},
-    {id:'D5',t:'FC audit trail available (config changes, alarms, events)'},{id:'D6',t:'FC configuration backup file available and dated'},
+    {id:'D5',t:'FC audit trail available'},{id:'D6',t:'FC configuration backup file available and dated'},
     {id:'D7',t:'Base pressure = 1.03323 kg/cm² and base temperature = 15.00°C'},
-    {id:'D8',t:'AGA-8 Ed.2017 (or 1994) Detailed used — NOT 1992 edition'},
+    {id:'D8',t:'AGA-8 Ed.2017 (or 1994) Detailed — NOT 1992 edition'},
     {id:'D9',t:'Gas analysis updated fortnightly per GSA. Last chemistry report date: ___'},
     {id:'D10',t:'GC online / integrated to FC (Yes/No). GC tag no.: ___'},
     {id:'D11',t:'For liquid USMs: density / viscosity from densitometer or keypad'},
@@ -321,7 +362,7 @@ USM:[
     {id:'E2',t:'Calibration at accredited flow laboratory (FCRI / NMI or equivalent)'},
     {id:'E3',t:'Zero flow check at line conditions (value recorded)'},
     {id:'E4',t:'FC validation with Kelton/equivalent. Zair, Zb, Zf documented.'},
-    {id:'E5',t:'Seal nos. (as-found AND as-left) documented in calibration report'},
+    {id:'E5',t:'Seal nos. (as-found AND as-left) documented'},
     {id:'E6',t:'Unmeasured fluid during calibration quantified and stated in report'},
     {id:'E7',t:'SAP ZPMCALIB record generated'},{id:'E8',t:'Master instruments (PT, TT) NABL-traceable'},
     {id:'E9',t:'Prover meter (if applicable) — last calibration at FCRI'},
@@ -346,7 +387,7 @@ MFM:[
     {id:'A7',t:'MFM sensor NOT under mechanical tension / stress. Confirm by visual.'},
     {id:'A8',t:'PT and TT installed downstream of MFM sensor — working?'},
     {id:'A9',t:'Heat tracing / insulation on MFM skid (if high-viscosity service)'},
-    {id:'A10',t:'By-pass available? If yes — positive isolation'},
+    {id:'A10',t:'By-pass available? Positive isolation if yes'},
     {id:'A11',t:'Auto-sampler installed (Yes/No). Working?'},{id:'A12',t:'Online water-cut (BS&W) meter installed. Working?'},
     {id:'A13',t:'Online densitometer installed. Working? Cal. date.'},
     {id:'A14',t:'Pipeline vibration at MFM sensor location — acceptable level?'},
@@ -400,11 +441,11 @@ TFM:[
     {id:'A4',t:'K-factor linearity (%): confirm within ±0.5% across flow range'},
     {id:'A5',t:'K-factor repeatability (%): confirm ≤ 0.2%'},{id:'A6',t:'Flow range: Qmin to Qmax — confirm operating flow within range'},
     {id:'A7',t:'Operating flow currently at what % of Qmax?'},{id:'A8',t:'Philosophy: Single / Duty-Standby / 1W+1S (confirm)'},
-    {id:'A9',t:'By-pass available? If yes — positive isolation'},
-    {id:'A10',t:'Upstream straight run ≥ 10D (without conditioner) OR ≥ 5D with approved conditioner'},
+    {id:'A9',t:'By-pass available? Positive isolation if yes'},
+    {id:'A10',t:'Upstream straight run ≥ 10D (no conditioner) OR ≥ 5D with approved conditioner'},
     {id:'A11',t:'Downstream straight run ≥ 5D confirmed'},{id:'A12',t:'Flow conditioner / straightening vane installed (Yes/No/Type)'},
-    {id:'A13',t:'Strainer / filter installed upstream. Mesh size adequate to protect rotor blades.'},
-    {id:'A14',t:'Strainer last cleaned — date recorded'},{id:'A15',t:'Air eliminator installed upstream (for liquid service — mandatory)'},
+    {id:'A13',t:'Strainer / filter installed upstream. Mesh size adequate.'},{id:'A14',t:'Strainer last cleaned — date recorded'},
+    {id:'A15',t:'Air eliminator installed upstream (for liquid service — mandatory)'},
     {id:'A16',t:'Liquid service: pipeline fully flooded (no gas pockets)'},
     {id:'A17',t:'Rotor last inspected — any blade damage, erosion, or fouling?'},
     {id:'A18',t:'Meter orientation: horizontal / vertical — confirm per Mfr specification'},
@@ -519,7 +560,9 @@ Weighbridge:[
 ],
 };
 
-// ── DEFAULT STATE ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
 function defaultState(){return{
   activePage:'cover',
   cover:{reportNo:'',dateAudit:'',dateReport:'',installations:'',fromName:'',fromDesig:'',
@@ -545,40 +588,69 @@ function defaultState(){return{
 };}
 
 let state=defaultState();
+let activeMeterType='Orifice';
+let deferredInstallPrompt=null;
 
-// ── PERSISTENCE ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════════════════
 function loadData(){
-  try{const s=localStorage.getItem('ongc_v5');if(s){state=JSON.parse(s);
-    if(!state.description.calSchedules)state.description.calSchedules={};
-    if(!state.description.calTags)state.description.calTags={};
-  }}catch(e){}
+  try{
+    const s=localStorage.getItem('ongc_v6');
+    if(s){state=JSON.parse(s);
+      if(!state.description.calSchedules)state.description.calSchedules={};
+      if(!state.description.calTags)state.description.calTags={};
+    }
+  }catch(e){}
   METER_TYPES.forEach(t=>{if(!state.meters[t])state.meters[t]=[];if(state.activeMeters[t]===undefined)state.activeMeters[t]=0;});
-  if(!state.assetData||!state.assetData.rows)state.assetData=defaultState().assetData;
+  if(!state.assetData?.rows)state.assetData=defaultState().assetData;
 }
-
 function saveData(quiet){
-  localStorage.setItem('ongc_v5',JSON.stringify(state));
-  if(!quiet)showToast('✓ Saved to device');
+  localStorage.setItem('ongc_v6',JSON.stringify(state));
+  if(!quiet)showToast('✓ Saved');
 }
-
 function resetAll(){
   if(!confirm('Reset ALL data? This cannot be undone.'))return;
-  localStorage.removeItem('ongc_v5');
+  localStorage.removeItem('ongc_v6');
   state=defaultState();
   METER_TYPES.forEach(t=>{state.meters[t]=[];state.activeMeters[t]=0;});
   activeMeterType='Orifice';
-  navigate('cover');showToast('✓ All data reset');
+  navigate('cover');showToast('✓ Reset complete');
 }
 
-// ── ROUTING ─────────────────────────────────────────────────────
-function navigate(p){state.activePage=p;renderNav();renderPage();}
+// ═══════════════════════════════════════════════════════════
+// PWA INSTALL
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  document.getElementById('installBanner').style.display='flex';
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBanner').style.display='none';
+  deferredInstallPrompt=null;
+  showToast('✓ App installed!');
+});
+function doInstall(){
+  if(!deferredInstallPrompt)return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted')showToast('✓ Installing...');
+    deferredInstallPrompt=null;
+    document.getElementById('installBanner').style.display='none';
+  });
+}
+function closeBanner(){document.getElementById('installBanner').style.display='none';}
 
+// ═══════════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════════
+function navigate(p){state.activePage=p;renderNav();renderPage();}
 function renderNav(){
   document.getElementById('navTabs').innerHTML=PAGES.map(p=>
-    `<div class="tab ${state.activePage===p.id?'active':''}" onclick="navigate('${p.id}')">${p.label}</div>`
+    `<div class="tab ${state.activePage===p.id?'on':''}" onclick="navigate('${p.id}')">${p.label}</div>`
   ).join('');
 }
-
 function renderPage(){
   const el=document.getElementById('mainContent');
   if(state.activePage==='cover')el.innerHTML=renderCover();
@@ -586,93 +658,110 @@ function renderPage(){
   else if(state.activePage==='desc')el.innerHTML=renderDescription();
   else if(state.activePage==='meters')el.innerHTML=renderMetersPage();
   else if(state.activePage==='obs')el.innerHTML=renderObservations();
+  else if(state.activePage==='import')el.innerHTML=renderImport();
   attachListeners();
   if(state.activePage==='meters')setTimeout(()=>renderMTC(activeMeterType),0);
 }
 
-// ── COVER ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// COVER
+// ═══════════════════════════════════════════════════════════
 function renderCover(){const c=state.cover;return`
-  <div class="cs-section"><div class="ptitle">Report Details</div>
-    <div class="frow"><div><div class="fl">Report No.</div><input class="fi" data-path="cover.reportNo" value="${e(c.reportNo)}" placeholder="e.g. TA-EA/2026/01"></div>
-    <div><div class="fl">Date of Audit</div><input type="date" class="fi" data-path="cover.dateAudit" value="${e(c.dateAudit)}"></div></div>
-    <div class="frow"><div><div class="fl">Date of Report</div><input type="date" class="fi" data-path="cover.dateReport" value="${e(c.dateReport)}"></div>
-    <div><div class="fl">Installation(s)</div><input class="fi" data-path="cover.installations" value="${e(c.installations)}" placeholder="e.g. Gandhar, Ankleshwar"></div></div>
-    <div class="frow"><div><div class="fl">From (Name)</div><input class="fi" data-path="cover.fromName" value="${e(c.fromName)}" placeholder="Name"></div>
-    <div><div class="fl">Designation</div><input class="fi" data-path="cover.fromDesig" value="${e(c.fromDesig)}" placeholder="Designation"></div></div>
+  <div class="ptitle" style="margin-top:2px">Report Details</div>
+  <div class="frow">
+    <div><div class="fl">Report No.</div><input class="fi" data-path="cover.reportNo" value="${e(c.reportNo)}" placeholder="e.g. TA-EA/2026/01"></div>
+    <div><div class="fl">Date of Audit</div><input type="date" class="fi" data-path="cover.dateAudit" value="${e(c.dateAudit)}"></div>
+  </div>
+  <div class="frow">
+    <div><div class="fl">Date of Report</div><input type="date" class="fi" data-path="cover.dateReport" value="${e(c.dateReport)}"></div>
+    <div><div class="fl">Installation(s)</div><input class="fi" data-path="cover.installations" value="${e(c.installations)}" placeholder="e.g. Gandhar"></div>
+  </div>
+  <div class="frow">
+    <div><div class="fl">From (Name)</div><input class="fi" data-path="cover.fromName" value="${e(c.fromName)}" placeholder="Name"></div>
+    <div><div class="fl">Designation</div><input class="fi" data-path="cover.fromDesig" value="${e(c.fromDesig)}" placeholder="Designation"></div>
   </div>
   ${rPS('Auditors','cover.auditors',c.auditors,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
   ${rPS('Asset I/c TA-EA','cover.icea',c.icea,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
   ${rPS('Asset I/c Instrumentation','cover.icei',c.icei,['name','desig','cpf','contact'],['Name','Designation','CPF No.','Contact No.'])}
   ${rPS('Installation Representatives','cover.instReps',c.instReps,['inst','name','desig','cpf'],['Installation','Name','Designation','CPF No.'])}
 `;}
-
-function rPS(title,path,rows,keys,labels){return`<div class="cs-section"><div class="ptitle">${title}</div>
-  ${rows.map((r,i)=>`<div style="display:grid;grid-template-columns:repeat(${keys.length},1fr);gap:6px;margin-bottom:6px">
+function rPS(title,path,rows,keys,labels){return`
+  <div style="margin-bottom:14px"><div class="ptitle">${title}</div>
+  ${rows.map((r,i)=>`<div style="display:grid;grid-template-columns:repeat(${keys.length},1fr);gap:5px;margin-bottom:5px">
     ${keys.map((k,j)=>`<div>${i===0?`<div class="fl">${labels[j]}</div>`:''}<input class="fi" data-path="${path}[${i}].${k}" value="${e(r[k]||'')}" placeholder="${labels[j]}"></div>`).join('')}
   </div>`).join('')}
   <button class="add-obs" onclick="addPR('${path}','${keys.join(',')}')">+ Add Row</button></div>`;}
-
 function addPR(path,ks){const keys=ks.split(','),obj={};keys.forEach(k=>obj[k]='');
   const pts=path.split('.');let ref=state;for(let i=0;i<pts.length-1;i++)ref=ref[pts[i]];
   ref[pts[pts.length-1]].push(obj);renderPage();}
 
-// ── ASSET DATA ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// ASSET DATA
+// ═══════════════════════════════════════════════════════════
 function renderAssetData(){const rows=state.assetData.rows;return`
   <div class="ptitle">Asset Data</div>
-  <div style="overflow-x:auto"><table class="dt" style="min-width:360px">
+  <div style="overflow-x:auto"><table class="dt" style="min-width:340px">
     <thead><tr><th>#</th><th>Description</th><th>Approx. Value / Day</th><th>Unit</th></tr></thead>
     <tbody>${rows.map((r,i)=>`<tr>
-      <td style="color:var(--text2);font-size:11px;width:26px">${i+1}</td>
+      <td style="color:var(--text2);font-size:10px;width:22px">${i+1}</td>
       <td><input data-path="assetData.rows[${i}].desc" value="${e(r.desc)}" placeholder="Description"></td>
       <td><input data-path="assetData.rows[${i}].value" value="${e(r.value)}" placeholder="Value"></td>
-      <td><input data-path="assetData.rows[${i}].unit" value="${e(r.unit)}" placeholder="Unit" style="max-width:70px"></td>
-    </tr>`).join('')}</tbody></table></div>
+      <td><input data-path="assetData.rows[${i}].unit" value="${e(r.unit)}" placeholder="Unit" style="max-width:65px"></td>
+    </tr>`).join('')}</tbody>
+  </table></div>
   <button class="add-row" onclick="addAR()">+ Add Row</button>`;}
-
 function addAR(){state.assetData.rows.push({desc:'',value:'',unit:''});renderPage();}
 
-// ── DESCRIPTION ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// DESCRIPTION
+// ═══════════════════════════════════════════════════════════
 function renderDescription(){
   const ml=state.description.meterList,snap=state.description.summary;
   let html=`<div class="ptitle">Flow Meter Details</div>
-  <div style="overflow-x:auto"><table class="dt" style="min-width:820px">
+  <div style="overflow-x:auto"><table class="dt" style="min-width:800px">
     <thead><tr><th>S.N.</th><th>Installation</th><th>Description</th><th>Meter Type</th><th>Tag No.</th><th>Service</th><th>Purpose</th><th>Last Cal.</th><th>Cal. Freq.</th><th>Remarks</th></tr></thead>
     <tbody>${ml.map((r,i)=>`<tr>
-      <td style="color:var(--text2);font-size:11px;width:22px">${i+1}</td>
+      <td style="color:var(--text2);font-size:10px;width:20px">${i+1}</td>
       <td><input data-path="description.meterList[${i}].inst" value="${e(r.inst||'')}" placeholder="Installation"></td>
       <td><input data-path="description.meterList[${i}].desc" value="${e(r.desc||'')}" placeholder="Description"></td>
       <td><select data-path="description.meterList[${i}].type">${['','Orifice','USM','MFM','TFM','Flare Meter','GC','Weighbridge','Other'].map(o=>`<option ${r.type===o?'selected':''}>${o}</option>`).join('')}</select></td>
       <td><input data-path="description.meterList[${i}].tag" value="${e(r.tag||'')}" placeholder="Tag No."></td>
       <td><select data-path="description.meterList[${i}].service">${['','Gas','Oil','Condensate','LPG','C2C3','Other'].map(o=>`<option ${r.service===o?'selected':''}>${o}</option>`).join('')}</select></td>
-      <td><select data-path="description.meterList[${i}].purpose">${['','CTM','PA','Other'].map(o=>`<option ${r.purpose===o?'selected':''}>${o}</option>`).join('')}</select></td>
+      <td><select data-path="description.meterList[${i}].purpose">${['','CTM','PA','Flare','Other'].map(o=>`<option ${r.purpose===o?'selected':''}>${o}</option>`).join('')}</select></td>
       <td><input type="date" data-path="description.meterList[${i}].lastCal" value="${e(r.lastCal||'')}"></td>
       <td><input data-path="description.meterList[${i}].freq" value="${e(r.freq||'')}" placeholder="Frequency"></td>
       <td><input data-path="description.meterList[${i}].remarks" value="${e(r.remarks||'')}" placeholder="Remarks"></td>
-    </tr>`).join('')}</tbody></table></div>
+    </tr>`).join('')}</tbody>
+  </table></div>
   <button class="add-row" onclick="addDR()">+ Add Meter</button>`;
 
-  // Cal Schedule Tables
-  html+=`<div style="margin-top:18px"><div class="ptitle">Calibration Schedules & Compliance</div>`;
+  // Cal schedules with EDITABLE tag headers
+  html+=`<div style="margin-top:16px"><div class="ptitle">Calibration Schedules & Compliance</div>`;
   CAL_SCHEDULES.forEach(sched=>{
     const tags=state.description.calTags[sched.key]||['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
-    html+=`<div class="sc open" id="sched_${sched.key}" style="margin-bottom:11px">
+    html+=`<div class="sc open" id="sched_${sched.key}" style="margin-bottom:9px">
       <div class="sh" onclick="toggleSec('sched_${sched.key}')">
         <div><div class="sl">Cal. Schedule</div><div class="st">${sched.label}</div></div>
         <span class="sv">⌃</span>
       </div>
       <div class="sb">
-        <div class="fl" style="margin-bottom:5px">${sched.tagLabel||'Meter Tags'}</div>
-        <div class="tagmgr">
-          ${tags.map((t,ti)=>`<span class="tpill"><input class="tag-edit" value="${e(t)}" onchange="renameTag('${sched.key}',${ti},this.value)" oninput="this.style.width=Math.max(60,this.value.length*7+12)+'px'" onclick="event.stopPropagation()" style="background:transparent;border:none;color:var(--text);font-size:11px;width:${Math.max(60,t.length*7+12)}px;outline:none;padding:0;min-width:60px;max-width:180px"><button class="trm" onclick="removeTag('${sched.key}',${ti})">×</button></span>`).join('')}
-          <button class="add-tag" onclick="addTag('${sched.key}')">+ Add Tag</button>
-        </div>
-        <div style="overflow-x:auto"><table class="st-table">
-          <thead><tr><th>Activity</th><th>Schedule</th>${tags.map(t=>`<th>${e(t)}</th>`).join('')}</tr></thead>
+        <div class="sch-wrap">
+        <table class="sch">
+          <thead><tr>
+            <th>Activity</th><th>Schedule</th>
+            ${tags.map((t,ti)=>`
+              <th class="tag-th">
+                <input value="${e(t)}" onchange="renameTag('${sched.key}',${ti},this.value)" title="Click to rename tag">
+                <button onclick="removeSchedTag('${sched.key}',${ti})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:0 2px" title="Remove tag">×</button>
+              </th>`).join('')}
+            <th style="background:var(--navy3);padding:4px"><button class="add-tag-btn" onclick="addSchedTag('${sched.key}')">+ Tag</button></th>
+          </tr></thead>
           <tbody>${sched.rows.map((row,ri)=>`<tr>
             <td>${e(row.a)}</td><td>${e(row.s)}</td>
             ${tags.map((_,ti)=>{const k=`${sched.key}_${ri}_${ti}`,v=state.description.calSchedules[k]||'';
               return `<td><select onchange="setCS('${sched.key}',${ri},${ti},this.value)">${COMP.map(o=>`<option ${v===o?'selected':''}>${o}</option>`).join('')}</select></td>`;
             }).join('')}
+            <td></td>
           </tr>`).join('')}</tbody>
         </table></div>
       </div></div>`;
@@ -681,54 +770,66 @@ function renderDescription(){
 
   // Summary
   const SR=[['custGas','Custody meter (Gas)'],['custOil','Custody meter (Oil)'],['custCon','Custody meter (Condensate/LPG/C2C3)'],['prodGas','Production meter (Gas)'],['prodOil','Production meter (Oil)'],['wb','Weighbridge']];
-  html+=`<div style="margin-top:18px"><div class="ptitle">Audited Flow Meter Summary</div>
-  <div style="overflow-x:auto"><table class="dt" style="min-width:540px">
+  html+=`<div style="margin-top:16px"><div class="ptitle">Audited Flow Meter Summary</div>
+  <div style="overflow-x:auto"><table class="dt" style="min-width:500px">
     <thead><tr><th>Sr.</th><th>Meter Type</th><th>Total</th><th>Working</th><th>Not Working</th><th>Calibrated</th><th>Not Calibrated</th></tr></thead>
-    <tbody>${SR.map(([k,label],i)=>`<tr><td style="color:var(--text2)">${i+1}</td><td style="font-size:12px">${label}</td>
+    <tbody>${SR.map(([k,label],i)=>`<tr><td style="color:var(--text2)">${i+1}</td><td style="font-size:11px">${label}</td>
       ${['T','W','NW','C','NC'].map(sf=>`<td><input data-path="description.summary.${k}${sf}" value="${e(snap[k+sf]||'')}" placeholder="-"></td>`).join('')}
     </tr>`).join('')}</tbody></table></div></div>`;
 
-  html+=`<div style="margin-top:14px"><div class="ptitle">Observation Snapshot</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+  html+=`<div style="margin-top:13px"><div class="ptitle">Observation Snapshot</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px">
     ${[['totalCTM','Total CTMs Audited'],['compliantCTM','Compliant CTMs'],['critNC','Critical NCs'],['highNC','High NCs'],['modNC','Moderate NCs'],['atrPending','Past ATR Pending']].map(([k,l])=>
       `<div><div class="fl">${l}</div><input class="fi" data-path="description.summary.${k}" value="${e(snap[k]||'')}"></div>`).join('')}
   </div></div>`;
   return html;
 }
-
 function addDR(){state.description.meterList.push({inst:'',desc:'',type:'',tag:'',service:'',purpose:'',lastCal:'',freq:'',remarks:''});renderPage();}
-function addTag(key){if(!state.description.calTags[key])state.description.calTags[key]=['Meter Tag 1','Meter Tag 2','Meter Tag 3'];const n=state.description.calTags[key].length+1;state.description.calTags[key].push('Meter Tag '+n);saveData(true);renderPage();}
-function removeTag(key,ti){if(!state.description.calTags[key])return;state.description.calTags[key].splice(ti,1);saveData(true);renderPage();}
-function renameTag(key,ti,val){if(!state.description.calTags[key])return;state.description.calTags[key][ti]=val;saveData(true);// also update the table header live without full re-render
-const tbl=document.querySelector(`#sched_${key} .st-table`);if(tbl){const ths=tbl.querySelectorAll('thead tr th');const tagIdx=2+ti;if(ths[tagIdx])ths[tagIdx].textContent=val||('Meter Tag '+(ti+1));}}
+function addSchedTag(key){
+  if(!state.description.calTags[key])state.description.calTags[key]=['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
+  const n=state.description.calTags[key].length+1;
+  state.description.calTags[key].push('Meter Tag '+n);
+  saveData(true);renderPage();
+}
+function removeSchedTag(key,ti){
+  if(!state.description.calTags[key])return;
+  state.description.calTags[key].splice(ti,1);
+  // Remove compliance data for removed tag
+  const sched=CAL_SCHEDULES.find(s=>s.key===key);
+  if(sched)sched.rows.forEach((_,ri)=>delete state.description.calSchedules[`${key}_${ri}_${ti}`]);
+  saveData(true);renderPage();
+}
+function renameTag(key,ti,val){
+  if(!state.description.calTags[key])state.description.calTags[key]=['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
+  state.description.calTags[key][ti]=val;
+  saveData(true);
+}
 function setCS(key,ri,ti,val){state.description.calSchedules[`${key}_${ri}_${ti}`]=val;saveData(true);}
 
-// ── METERS ──────────────────────────────────────────────────────
-let activeMeterType='Orifice';
-
-function renderMetersPage(){return`<div class="ptitle">Select Meter Type</div>
-  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">
+// ═══════════════════════════════════════════════════════════
+// METERS PAGE
+// ═══════════════════════════════════════════════════════════
+function renderMetersPage(){return`
+  <div class="ptitle">Select Meter Type</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px">
     ${METER_TYPES.map(t=>`<button class="mt ${activeMeterType===t?'am':''}" onclick="switchMT('${t}')">
-      ${t}${state.meters[t]&&state.meters[t].length?` <span style="background:var(--accent);color:var(--navy);border-radius:9px;padding:1px 5px;font-size:10px">${state.meters[t].length}</span>`:''}
+      ${t}${state.meters[t]?.length?` <span style="background:var(--accent);color:var(--navy);border-radius:8px;padding:1px 5px;font-size:9px">${state.meters[t].length}</span>`:''}
     </button>`).join('')}
   </div>
   <div id="mtc"></div>`;}
-
 function switchMT(type){activeMeterType=type;renderPage();}
 
 function renderMTC(type){
   const el=document.getElementById('mtc');if(!el)return;
   const meters=state.meters[type]||[];
   if(!meters.length){el.innerHTML=`<div class="empty"><div class="icon">🔧</div>
-    <p>No <strong>${type}</strong> meters added yet.<br>Tap below to add the first one.</p>
-    <button class="add-m" style="margin-top:13px" onclick="addM('${type}')">+ Add ${type} Meter</button></div>`;return;}
+    <p>No <strong>${type}</strong> meters added.<br>Tap below to add one.</p>
+    <button class="add-m" style="margin-top:12px;padding:7px 16px" onclick="addM('${type}')">+ Add ${type} Meter</button></div>`;return;}
   const idx=Math.min(state.activeMeters[type]||0,meters.length-1);
-  state.activeMeters[type]=idx;
-  const m=meters[idx];
-  if(!m.data)m.data={};
+  state.activeMeters[type]=idx;const m=meters[idx];if(!m.data)m.data={};
 
   el.innerHTML=`<div class="mm">
-    <div class="mm-title">${type} Meters</div>
+    <div class="mm-t">${type} Meters</div>
     <div class="mt-wrap">
       ${meters.map((mx,i)=>`<div class="mt ${i===idx?'am':''}" onclick="selM('${type}',${i})">
         ${e(mx.label||type+' '+(i+1))}
@@ -748,10 +849,9 @@ function renderMTC(type){
   ${renderProg(type,idx)}
   ${renderCL(type,idx)}`;
 
-  // *** ROOT FIX: attach listeners directly to the injected inputs ***
   el.querySelectorAll('[data-mtype]').forEach(inp=>{
     ['input','change'].forEach(evt=>inp.addEventListener(evt,ev=>{
-      const {mtype,midx,cpid,field}=ev.target.dataset;
+      const{mtype,midx,cpid,field}=ev.target.dataset;
       const mx=state.meters[mtype][parseInt(midx)];
       if(!mx.data)mx.data={};
       if(!mx.data[cpid])mx.data[cpid]={val:'',rem:''};
@@ -760,21 +860,18 @@ function renderMTC(type){
     }));
   });
 }
-
 function setMF(type,idx,field,val){
   const m=state.meters[type][idx];
   if(field==='label')m.label=val;else m.header[field]=val;
   saveData(true);
 }
-
 function renderProg(type,idx){
   const cl=CL[type]||[];const m=state.meters[type][idx];
   let total=0,filled=0;
-  cl.forEach(sec=>sec.items.forEach(item=>{total++;const d=m.data&&m.data[item.id];if(d&&(d.val||d.rem))filled++;}));
+  cl.forEach(sec=>sec.items.forEach(item=>{total++;const d=m.data?.[item.id];if(d&&(d.val||d.rem))filled++;}));
   const pct=total?Math.round(filled/total*100):0;
-  return`<div class="pw"><div class="pl"><span>Completion</span><span>${filled}/${total} checkpoints (${pct}%)</span></div>
+  return`<div class="pw"><div class="pl"><span>Completion</span><span>${filled}/${total} (${pct}%)</span></div>
     <div class="pb"><div class="pf" style="width:${pct}%"></div></div></div>`;}
-
 function renderCL(type,idx){
   const sections=CL[type]||[];const m=state.meters[type][idx];if(!m.data)m.data={};
   return sections.map((sec,si)=>`
@@ -786,15 +883,14 @@ function renderCL(type,idx){
       <div class="sb">${sec.items.map(item=>{
         const d=m.data[item.id]||{val:'',rem:''};
         return`<div class="cp-row">
-          <div><span class="cp-id">${item.id}</span><span class="cp-text"> ${item.t}</span></div>
-          <div class="cp-grid">
-            <div><div style="font-size:10px;color:var(--text2);margin-bottom:2px">Detail / Value</div>
+          <div><span class="cp-id">${item.id}</span><span class="cp-txt"> ${item.t}</span></div>
+          <div class="cp-g">
+            <div><div style="font-size:9px;color:var(--text2);margin-bottom:2px">Detail / Value</div>
               <input class="ci" placeholder="Enter value..." value="${e(d.val||'')}" data-mtype="${type}" data-midx="${idx}" data-cpid="${item.id}" data-field="val"></div>
-            <div><div style="font-size:10px;color:var(--text2);margin-bottom:2px">Remarks</div>
+            <div><div style="font-size:9px;color:var(--text2);margin-bottom:2px">Remarks</div>
               <input class="ci" placeholder="Remarks..." value="${e(d.rem||'')}" data-mtype="${type}" data-midx="${idx}" data-cpid="${item.id}" data-field="rem"></div>
           </div></div>`;}).join('')}
       </div></div>`).join('');}
-
 function addM(type){
   if(!state.meters[type])state.meters[type]=[];
   const n=state.meters[type].length+1;
@@ -811,13 +907,15 @@ function delM(type,idx){
 }
 function toggleSec(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
 
-// ── OBSERVATIONS ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// OBSERVATIONS
+// ═══════════════════════════════════════════════════════════
 function renderObservations(){const obs=state.observations;return`
   <div class="ptitle">Observations & Recommendations</div>
   ${obs.map((o,i)=>`<div class="obs-row">
     <button class="obs-del" onclick="delObs(${i})">×</button>
-    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:7px">OBS ${i+1}</div>
-    <div class="obs-grid">
+    <div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:7px">OBS ${i+1}</div>
+    <div class="og">
       <div><div class="fl">Meter Tag / Location</div><input class="fi" data-path="observations[${i}].tag" value="${e(o.tag||'')}" placeholder="Tag / Location"></div>
       <div><div class="fl">Category</div><select class="fi" data-path="observations[${i}].cat">${OBS_CAT.map(v=>`<option ${o.cat===v?'selected':''}>${v}</option>`).join('')}</select></div>
       <div><div class="fl">Priority</div><select class="fi" data-path="observations[${i}].priority">${OBS_PRI.map(v=>`<option ${o.priority===v?'selected':''}>${v}</option>`).join('')}</select></div>
@@ -827,30 +925,359 @@ function renderObservations(){const obs=state.observations;return`
     <div style="margin-top:7px"><div class="fl">Recommended Action</div><textarea class="fi" data-path="observations[${i}].action" placeholder="Recommended action...">${e(o.action||'')}</textarea></div>
   </div>`).join('')}
   <button class="add-obs" onclick="addObs()">+ Add Observation</button>`;}
-
 function addObs(){state.observations.push({tag:'',obs:'',cat:'',priority:'',action:'',workcentre:''});renderPage();setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),80);}
 function delObs(i){state.observations.splice(i,1);renderPage();}
 
-// ── LISTENERS ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// IMPORT PAGE
+// ═══════════════════════════════════════════════════════════
+function renderImport(){return`
+  <div class="ptitle">Import Excel Files</div>
+  <div class="imp-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleFiles(this.files)">
+    <div class="icon">📥</div>
+    <p><strong>Tap to select</strong> or drag & drop Excel files here</p>
+    <p style="margin-top:4px;font-size:11px">Supports multiple files — data merges into current state</p>
+  </div>
+  <div class="imp-log" id="impLog" style="display:none"></div>
+  <div style="margin-top:12px;font-size:11px;color:var(--text2);line-height:1.6">
+    <div style="font-weight:600;color:var(--text);margin-bottom:6px">What gets imported:</div>
+    • <strong>Description sheet</strong> — Flow meter list and calibration schedule compliance<br>
+    • <strong>All meter sheets</strong> — Orifice, USM, MFM, TFM, Flare Meter, GC, Weighbridge<br>
+    • <strong>Data sheet</strong> — Asset data values<br>
+    • Multiple meters per sheet are each imported as separate meter instances<br>
+    • Existing data is preserved — imported data is merged (appended)
+  </div>`;}
+
+function handleFiles(files){
+  const log=document.getElementById('impLog');
+  log.style.display='block';log.innerHTML='';
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        importWorkbook(wb,file.name,log);
+        saveData(true);
+        showToast(`✓ Imported ${file.name}`);
+      }catch(err){
+        addLog(log,'err',`✗ ${file.name}: ${err.message}`);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ── Drag & drop
+document.addEventListener('dragover',ev=>{ev.preventDefault();document.getElementById('dropZone')?.classList.add('drag');});
+document.addEventListener('dragleave',()=>document.getElementById('dropZone')?.classList.remove('drag'));
+document.addEventListener('drop',ev=>{
+  ev.preventDefault();document.getElementById('dropZone')?.classList.remove('drag');
+  handleFiles(ev.dataTransfer?.files||[]);
+});
+
+function addLog(log,cls,msg){
+  const d=document.createElement('div');
+  d.className=cls;d.textContent=msg;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXCEL IMPORT ENGINE
+// ═══════════════════════════════════════════════════════════
+function importWorkbook(wb,fname,log){
+  addLog(log,'warn',`━━ Importing: ${fname} ━━`);
+
+  wb.SheetNames.forEach(sheetName=>{
+    const ws=wb.Sheets[sheetName];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    const key=sheetName.toLowerCase().trim();
+
+    if(key==='description'){
+      importDescription(raw,log);
+    } else if(key==='data'){
+      importAssetData(raw,log);
+    } else {
+      // find meter type
+      let mtype=null;
+      for(const [k,v] of Object.entries(SHEET_TO_TYPE)){
+        if(key===k||key.startsWith(k)){mtype=v;break;}
+      }
+      if(mtype){
+        importMeterSheet(raw,mtype,sheetName,log);
+      } else {
+        addLog(log,'warn',`  ⚠ Skipped unknown sheet: "${sheetName}"`);
+      }
+    }
+  });
+}
+
+// ── Import Description sheet ────────────────────────────────
+function importDescription(rows,log){
+  if(!rows.length)return;
+  // Find Flow Meter Details table — look for SN column
+  let fmdStart=-1;
+  for(let i=0;i<rows.length;i++){
+    if(String(rows[i][0]).trim()==='SN'||String(rows[i][0]).trim()==='1'){
+      // Check if row i-1 or i has the headers we expect
+      const r=rows[i];
+      if(r.length>=4&&(String(r[1]).toLowerCase().includes('install')||String(r[0]).toLowerCase()==='sn')){
+        fmdStart=i;break;
+      }
+    }
+  }
+  // Fallback: look for header row
+  if(fmdStart===-1){
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i];
+      if(String(r[0]).toLowerCase()==='sn'&&String(r[1]).toLowerCase().includes('install')){fmdStart=i;break;}
+    }
+  }
+
+  let meterCount=0;
+  if(fmdStart>=0){
+    for(let i=fmdStart+1;i<rows.length;i++){
+      const r=rows[i];
+      const sn=String(r[0]||'').trim();
+      if(!sn||isNaN(Number(sn)))continue;
+      const inst=str(r[1]),desc=str(r[2]),mtype=str(r[3]),tag=str(r[4]),svc=str(r[5]),purpose=str(r[6]),lastCal=str(r[7]),freq=str(r[8]),remarks=str(r[10]||r[9]||'');
+      if(!inst&&!tag&&!mtype)continue;
+      // Check not duplicate
+      const exists=state.description.meterList.some(m=>m.tag===tag&&tag);
+      if(!exists){
+        state.description.meterList.push({inst,desc,type:mapMeterType(mtype),tag,service:svc,purpose:mapPurpose(purpose),lastCal:normaliseDate(lastCal),freq,remarks});
+        meterCount++;
+      }
+    }
+    addLog(log,'ok',`  ✓ Description: ${meterCount} meter(s) imported`);
+  }
+
+  // Find calibration schedule compliance data
+  // Look for "Orifice", "USM", "MFM" etc. type rows
+  importCalSchedules(rows,log);
+}
+
+function importCalSchedules(rows,log){
+  // Map from Excel schedule row label → CAL_SCHEDULES key
+  const typeMap={
+    'orifice':'orifice','usm':'usm','mfm':'mfm',
+    'turbine meter':'tfm','turbine':'tfm',
+    'flow computer':'fc','metering system':'ms'
+  };
+  let currentKey=null;
+  let currentRowIdx=0; // index within sched.rows
+  let tags=null;
+  let compCount=0;
+
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    const col0=str(r[0]).toLowerCase().trim();
+    const col1=str(r[1]).toLowerCase().trim();
+
+    // Detect meter type header
+    for(const [label,key] of Object.entries(typeMap)){
+      if(col0===label||(col0===''&&col1===label)){
+        currentKey=key;currentRowIdx=0;
+        // Next non-empty row after this has the tags
+        // Look at this row's columns 3+ for tags
+        const potentialTags=r.slice(3).map(v=>str(v)).filter(v=>v&&v!=='');
+        if(potentialTags.length>0){
+          tags=potentialTags;
+          if(!state.description.calTags[key]||state.description.calTags[key].every(t=>t.startsWith('Meter Tag')))
+            state.description.calTags[key]=[...tags];
+        }
+        break;
+      }
+    }
+    if(!currentKey)continue;
+
+    // Detect activity row (col1 has activity text, col0 empty or same as meter type)
+    const sched=CAL_SCHEDULES.find(s=>s.key===currentKey);
+    if(!sched)continue;
+
+    // If col0 or col1 matches an activity
+    let activityRow=-1;
+    const activity=(col0===''||typeMap[col0]!==undefined)?col1:col0;
+    for(let ri=0;ri<sched.rows.length;ri++){
+      if(sched.rows[ri].a.toLowerCase().includes(activity.substring(0,15))){
+        activityRow=ri;break;
+      }
+    }
+    if(activityRow===-1)continue;
+    if(!tags)continue;
+
+    // Read compliance values for each tag
+    const dataStart=3; // cols 0=type, 1=activity, 2=schedule, 3+=values
+    tags.forEach((tag,ti)=>{
+      const val=str(r[dataStart+ti]).trim();
+      if(val){
+        const k=`${currentKey}_${activityRow}_${ti}`;
+        if(COMP.includes(val))state.description.calSchedules[k]=val;
+        else if(val.toLowerCase().includes('compli'))state.description.calSchedules[k]='Complied';
+        compCount++;
+      }
+    });
+  }
+  if(compCount>0)addLog(log,'ok',`  ✓ Cal. schedules: ${compCount} compliance entries imported`);
+}
+
+// ── Import meter sheet ───────────────────────────────────────
+function importMeterSheet(rows,mtype,sheetName,log){
+  if(!rows.length)return;
+  const cl=CL[mtype];if(!cl)return;
+
+  // Build checkpoint id→text map for fuzzy matching
+  const cpMap={};
+  cl.forEach(sec=>sec.items.forEach(item=>cpMap[item.id]=item));
+
+  // Find how many meters are in this sheet
+  // Header row structure: Row with "Tag No." then alternating value/remarks columns
+  let tagRow=-1,headerRow=-1;
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const r=rows[i];
+    if(r.some(c=>String(c).trim()==='Tag No.')){tagRow=i;break;}
+  }
+  // Find data header row (SN column)
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const r=rows[i];
+    if(String(r[0]).trim()==='SN'&&String(r[1]).toLowerCase().includes('checkpoint')){headerRow=i;break;}
+  }
+  if(headerRow===-1){addLog(log,'warn',`  ⚠ ${sheetName}: Could not find data header row`);return;}
+
+  // Detect meters from tag row
+  let meterTags=[];
+  if(tagRow>=0){
+    const tr=rows[tagRow];
+    // Tags are at alternating positions: col2, col4, col6... (each meter = 2 cols: value+remarks)
+    for(let c=2;c<tr.length;c+=2){
+      const tag=String(tr[c]||'').trim();
+      if(tag&&tag.toLowerCase()!=='meter 1'&&tag.toLowerCase()!=='meter 2')meterTags.push({tag,col:c});
+      else if(tag)meterTags.push({tag:'',col:c});
+    }
+    if(meterTags.length===0){
+      // try every col from 2
+      for(let c=2;c<tr.length;c+=2){meterTags.push({tag:'',col:c});}
+    }
+  }
+  if(meterTags.length===0)meterTags=[{tag:'',col:2}]; // fallback single meter
+
+  // Read header info (Installation, Service, Consumer, Make/Model, Size)
+  const headerInfo=[];
+  for(let mi=0;mi<meterTags.length;mi++){
+    const col=meterTags[mi].col;
+    const info={inst:'',svc:'',consumer:'',make:'',size:''};
+    for(let i=0;i<headerRow;i++){
+      const r=rows[i];const label=String(r[0]||'').toLowerCase().trim();
+      const val=String(r[col]||r[col+1]||'').trim();
+      if(label.includes('install'))info.inst=val;
+      else if(label.includes('service'))info.svc=val;
+      else if(label.includes('consumer'))info.consumer=val;
+      else if(label.includes('make'))info.make=val;
+      else if(label.includes('size'))info.size=val;
+    }
+    headerInfo.push(info);
+  }
+
+  // Determine tag labels
+  for(let mi=0;mi<meterTags.length;mi++){
+    if(!meterTags[mi].tag){
+      meterTags[mi].tag=headerInfo[mi].inst||mtype+' '+(mi+1);
+    }
+  }
+
+  // Parse checkpoint data
+  const meterData=meterTags.map(()=>({}));
+  for(let ri=headerRow+1;ri<rows.length;ri++){
+    const r=rows[ri];
+    const cpid=String(r[0]||'').trim();
+    if(!cpid||!cpMap[cpid])continue;
+    meterTags.forEach(({col},mi)=>{
+      const val=String(r[col]||'').trim();
+      const rem=String(r[col+1]||'').trim();
+      if(val||rem)meterData[mi][cpid]={val,rem};
+    });
+  }
+
+  // Add meters to state
+  if(!state.meters[mtype])state.meters[mtype]=[];
+  let added=0;
+  meterTags.forEach(({tag},mi)=>{
+    const data=meterData[mi];
+    const hasData=Object.keys(data).length>0;
+    if(!hasData&&!tag&&mi>0)return; // skip empty trailing meters
+    // Check for duplicate tag
+    const exists=state.meters[mtype].some(m=>m.label===tag&&tag);
+    if(!exists){
+      state.meters[mtype].push({
+        label:tag||mtype+' '+(state.meters[mtype].length+1),
+        header:headerInfo[mi]||{inst:'',svc:'',consumer:'',make:'',size:''},
+        data,
+      });
+      added++;
+    }
+  });
+  addLog(log,'ok',`  ✓ ${sheetName}: ${added} meter(s) imported`);
+}
+
+// ── Import Asset Data sheet ──────────────────────────────────
+function importAssetData(rows,log){
+  let count=0;
+  for(const r of rows){
+    const desc=str(r[1]||r[0]);const val=str(r[2]||r[1]);const unit=str(r[3]||r[2]);
+    if(!desc||desc.toLowerCase().includes('description')||desc.toLowerCase().includes('approx'))continue;
+    const existing=state.assetData.rows.find(row=>row.desc.toLowerCase()===desc.toLowerCase());
+    if(existing){existing.value=val||existing.value;existing.unit=unit||existing.unit;}
+    else if(desc){state.assetData.rows.push({desc,value:val,unit});count++;}
+  }
+  if(count>0)addLog(log,'ok',`  ✓ Asset Data: ${count} row(s) imported`);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function str(v){return String(v??'').trim();}
+function mapMeterType(t){
+  const s=t.toLowerCase();
+  if(s.includes('orifice'))return'Orifice';if(s.includes('usm'))return'USM';
+  if(s.includes('mfm')||s.includes('coriolis'))return'MFM';
+  if(s.includes('turbine')||s.includes('tfm'))return'TFM';
+  if(s.includes('flare'))return'Flare';if(s.includes('gc'))return'GC';
+  if(s.includes('weigh'))return'Weighbridge';return t;
+}
+function mapPurpose(p){
+  const s=p.toLowerCase();
+  if(s.includes('ctm'))return'CTM';if(s.includes('pa'))return'PA';
+  if(s.includes('flare'))return'Flare';return p;
+}
+function normaliseDate(d){
+  if(!d)return'';
+  // Try DD.MM.YYYY → YYYY-MM-DD
+  const m=d.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  if(m)return`${m[3]}-${m[2]}-${m[1]}`;
+  return d;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LISTENERS
+// ═══════════════════════════════════════════════════════════
 function attachListeners(){
   document.querySelectorAll('[data-path]').forEach(el=>{
     const evt=el.tagName==='SELECT'||el.type==='date'?'change':'input';
     el.addEventListener(evt,ev=>{setPath(state,ev.target.dataset.path,ev.target.value);saveData(true);});
   });
 }
-
 function setPath(obj,path,value){
   const pts=path.replace(/\[(\d+)\]/g,'.$1').split('.');let ref=obj;
   for(let i=0;i<pts.length-1;i++){if(ref[pts[i]]===undefined)ref[pts[i]]={};ref=ref[pts[i]];}
   ref[pts[pts.length-1]]=value;
 }
-
 function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-// ── XLSX EXPORT ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// XLSX EXPORT
+// ═══════════════════════════════════════════════════════════
 function exportXLSX(){
   saveData(true);const wb=XLSX.utils.book_new();const c=state.cover;
+  // Cover Letter
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
     ['','ONGC FLOW METER AUDIT TEAM'],[''],['Report No.',c.reportNo],['Date of Audit',c.dateAudit],
     ['Date of Report',c.dateReport],['Installations',c.installations],[''],
@@ -858,10 +1285,12 @@ function exportXLSX(){
     ['Subject:','Technical Audit Report of Custody Transfer Flow meters of '+c.installations],[''],
     ['Sir,','Technical Audit of Flow meters of '+c.installations+' was conducted on '+c.dateAudit+'.'],
     [''],['Regards'],[''],['(NAME)',c.fromName],['(DESIGNATION)',c.fromDesig],[''],['Copy to:'],
-    ['1','Shri K N Ramesh, ED - CTS, ONGC, New Delhi','76132'],['2','Shri Sanjeev Kakar, CGM(M) - Head TA-EA, New Delhi','78590'],
-    ['3','Head Maintenance'],['4','Surface Manager'],['5','Area Manager'],['6','I/c Instrumentation'],
-    ['7','I/c TA-EA'],['8','LM'],['9','Flow Meter Audit Team Members'],
+    ['1','Shri K N Ramesh, ED - CTS, ONGC, New Delhi','76132'],
+    ['2','Shri Sanjeev Kakar, CGM(M) - Head TA-EA, New Delhi','78590'],
+    ['3','Head Maintenance'],['4','Surface Manager'],['5','Area Manager'],
+    ['6','I/c Instrumentation'],['7','I/c TA-EA'],['8','LM'],['9','Flow Meter Audit Team Members'],
   ]),'Cover Letter');
+  // Cover
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
     ['ONGC'],['Flow Meter Audit Team'],[''],['Flow Meter Audit Report'],['Year: 2026-27'],[''],
     ['Document No',c.reportNo],['Date of Audit',c.dateAudit],['Date of Report',c.dateReport],['Installations',c.installations],[''],
@@ -874,12 +1303,15 @@ function exportXLSX(){
     ['NAME & DESIGNATION OF INSTALLATION REPRESENTATIVE'],['SL NO','INSTALLATION','NAME','DESIGNATION','CPF NO'],
     ...c.instReps.map((r,i)=>[i+1,r.inst,r.name,r.desig,r.cpf]),
   ]),'Cover');
+  // Asset Data
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
     ['ASSET DATA'],['Description','Approx Asset Data per Day','Unit'],
     ...state.assetData.rows.map(r=>[r.desc,r.value,r.unit]),
   ]),'Data');
+  // Description
   const ds=state.description;
-  const da=[['FLOW METER DETAILS'],['SN','Installation','Flow Meter Description','Meter Type','Tag No.','Service','Purpose','Last Calibration','Cal. Frequency','Remarks'],
+  const da=[['FLOW METER DETAILS'],
+    ['SN','Installation','Flow Meter Description','Meter Type','Tag No.','Service','Purpose','Last Calibration','Cal. Frequency','Remarks'],
     ...ds.meterList.map((r,i)=>[i+1,r.inst,r.desc,r.type,r.tag,r.service,r.purpose,r.lastCal,r.freq,r.remarks]),['']];
   CAL_SCHEDULES.forEach(sched=>{
     const tags=ds.calTags[sched.key]||['Meter Tag 1','Meter Tag 2','Meter Tag 3'];
@@ -893,19 +1325,36 @@ function exportXLSX(){
   da.push([''],['OBSERVATION SNAPSHOT'],['Total CTMs Audited','Compliant CTMs','Critical NCs','High NCs','Moderate NCs','Past ATR Pending'],
     [ds.summary.totalCTM,ds.summary.compliantCTM,ds.summary.critNC,ds.summary.highNC,ds.summary.modNC,ds.summary.atrPending]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(da),'Description');
+  // Observations
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
-    ['OBSERVATIONS & RECOMMENDATIONS'],['Sl.No','Meter Tag / Location','Audit Observation','Category','Priority','Recommended Action','Responsible Workcentre'],
+    ['OBSERVATIONS & RECOMMENDATIONS'],
+    ['Sl.No','Meter Tag / Location','Audit Observation','Category','Priority','Recommended Action','Responsible Workcentre'],
     ...state.observations.map((o,i)=>[i+1,o.tag,o.obs,o.cat,o.priority,o.action,o.workcentre]),
   ]),'Observations & ATR');
+  // Meter sheets
   const SN={Orifice:'Orifice Meter',USM:'USM',MFM:'MFM',TFM:'Turbine Flow Meter (TFM)',Flare:'Flare Meter',GC:'Gas Chromatograph (GC)',Weighbridge:'Weighbridge'};
   METER_TYPES.forEach(type=>{
     const meters=state.meters[type]||[];if(!meters.length)return;
-    const cl=CL[type]||[];const aoa=[[`FLOW METER AUDIT CHECKLIST | ${type.toUpperCase()}`]];
-    meters.forEach((m,mi)=>{
-      aoa.push([''],['--- METER '+(mi+1)+': '+(m.label||type+' '+(mi+1))+' ---']);
-      aoa.push(['Installation',m.header.inst],['Service',m.header.svc],['Consumer',m.header.consumer],['Make / Model / Serial No.',m.header.make],['Meter Size',m.header.size],['']);
-      aoa.push(['SN','Checkpoint / Audit Criteria','Detail / Value','Remarks']);
-      cl.forEach(sec=>{aoa.push([sec.sec+'.  '+sec.title]);sec.items.forEach(item=>{const d=(m.data&&m.data[item.id])||{};aoa.push([item.id,item.t,d.val||'',d.rem||'']);});});
+    const cl=CL[type]||[];
+    // Build multi-meter sheet with all meters side by side
+    const maxItems=cl.reduce((a,sec)=>a+sec.items.length,0);
+    const aoa=[[`FLOW METER AUDIT CHECKLIST | ${type.toUpperCase()}`],['']];
+    // Header rows
+    const instRow=['Installation',''];const svcRow=['Service',''];const consRow=['Consumer',''];const makeRow=['Make / Model / Serial No.',''];const sizeRow=['Meter Size',''];const tagRow=['Tag No.',''];
+    meters.forEach(m=>{instRow.push(m.header.inst,'');svcRow.push(m.header.svc,'');consRow.push(m.header.consumer,'');makeRow.push(m.header.make,'');sizeRow.push(m.header.size,'');tagRow.push(m.label,'');});
+    aoa.push(instRow,svcRow,consRow,makeRow,sizeRow,tagRow,['']);
+    // Column headers
+    const hdr=['SN','Checkpoint / Audit Criteria'];
+    meters.forEach(m=>{hdr.push('Detail / Value','Remarks');});
+    aoa.push(hdr);
+    // Data rows
+    cl.forEach(sec=>{
+      aoa.push([sec.sec+'.  '+sec.title]);
+      sec.items.forEach(item=>{
+        const row=[item.id,item.t];
+        meters.forEach(m=>{const d=(m.data&&m.data[item.id])||{};row.push(d.val||'',d.rem||'');});
+        aoa.push(row);
+      });
     });
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),SN[type].substring(0,31));
   });
@@ -913,362 +1362,9 @@ function exportXLSX(){
   showToast('✓ Excel exported!');
 }
 
-
-// ── EXCEL IMPORT ─────────────────────────────────────────────────
-
-// ── EXCEL IMPORT ─────────────────────────────────────────────────
-function triggerImport(){document.getElementById('importFile').value='';document.getElementById('importFile').click();}
-function closeImportModal(){document.getElementById('importModal').style.display='none';}
-
-function importXLSX(files){
-  if(!files||!files.length)return;
-  const log=[];
-  let pending=files.length;
-  Array.from(files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=function(ev){
-      try{
-        const wb=XLSX.read(ev.target.result,{type:'array',cellDates:false});
-        log.push(...processWorkbook(wb,file.name));
-      }catch(err){log.push(`<span class="err">✗ ${file.name}: ${err.message}</span>`);}
-      pending--;
-      if(pending===0){saveData(true);renderPage();showImportModal(log);}
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-function showImportModal(log){
-  document.getElementById('importLog').innerHTML=log.join('\n')||'<span class="warn">Nothing imported.</span>';
-  document.getElementById('importModal').style.display='flex';
-}
-
-function sheetRows(wb,name){
-  const sh=wb.Sheets[name];if(!sh)return null;
-  return XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:true});
-}
-
-function cv(v){
-  if(v===null||v===undefined)return'';
-  return String(v).trim();
-}
-
-// ── Robust date formatter ──────────────────────────────────────
-function fmtDate(v){
-  if(!v&&v!==0)return'';
-  // Excel serial number (number type)
-  if(typeof v==='number'){
-    // Excel date serial: days since 1900-01-01 (with Lotus 1900 bug: serial 60 = fake 29-Feb-1900)
-    const d=new Date(Math.round((v-25569)*86400*1000));
-    if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);
-  }
-  const s=String(v).trim();
-  if(!s)return'';
-  // Already yyyy-mm-dd
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  // dd.mm.yyyy  (e.g. 19.01.2026)
-  const m1=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if(m1)return`${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
-  // dd-mm-yyyy or dd/mm/yyyy
-  const m2=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if(m2)return`${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
-  // yyyy/mm/dd
-  const m3=s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
-  if(m3)return`${m3[1]}-${m3[2]}-${m3[3]}`;
-  // dd mmm yyyy (e.g. 19 Jan 2026)
-  const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-  const m4=s.match(/^(\d{1,2})\s+([a-zA-Z]{3})\s+(\d{4})$/);
-  if(m4&&months[m4[2].toLowerCase()])return`${m4[3]}-${months[m4[2].toLowerCase()]}-${m4[1].padStart(2,'0')}`;
-  return s;
-}
-
-// ── Fuzzy meter type detection from sheet name or cell value ──
-function detectMeterType(sn){
-  const s=sn.toLowerCase().replace(/[^a-z0-9\s]/g,' ');
-  if(s.includes('orifice'))return'Orifice';
-  if(s.includes('usm')||s.includes('ultrasonic'))return'USM';
-  if(s.includes('mfm')||s.includes('coriolis'))return'MFM';
-  if(s.includes('turbine')||s.includes('tfm'))return'TFM';
-  if(s.includes('flare'))return'Flare';
-  if(s.includes('gc')||s.includes('gas chromatograph'))return'GC';
-  if(s.includes('weighbridge'))return'Weighbridge';
-  return null;
-}
-
-// ── Map Excel "Type of Meter" text to CAL_SCHEDULES key ───────
-function detectCalSchedKey(typeText){
-  const s=typeText.toLowerCase().trim();
-  if(s.includes('orifice'))return'orifice';
-  if(s.includes('usm')||s.includes('ultrasonic'))return'usm';
-  if(s.includes('mfm')||s.includes('coriolis'))return'mfm';
-  if(s.includes('turbine')||s.includes('tfm'))return'tfm';
-  if(s.includes('flare'))return'flare';
-  if(s.includes('gc')||s.includes('chromatograph'))return'gc';
-  if(s.includes('weighbridge'))return'weighbridge';
-  if(s.includes('flow computer')||s==='fc')return'fc';
-  if(s.includes('metering system')||s==='ms')return'ms';
-  return null;
-}
-
-// ── Fuzzy match activity text to sched.rows index ────────────
-function matchActivity(actText,schedRows){
-  const a=actText.toLowerCase().replace(/\s+/g,' ').trim();
-  // exact
-  let idx=schedRows.findIndex(r=>r.a.toLowerCase()===a);
-  if(idx>=0)return idx;
-  // partial: activity contains sched text or vice versa
-  idx=schedRows.findIndex(r=>a.includes(r.a.toLowerCase().slice(0,12))||r.a.toLowerCase().includes(a.slice(0,12)));
-  return idx;
-}
-
-// ── processWorkbook ───────────────────────────────────────────
-function processWorkbook(wb,fname){
-  const log=[`<span class="ok">📄 ${fname}</span>`];
-  wb.SheetNames.forEach(sn=>{
-    const rows=sheetRows(wb,sn);
-    if(!rows||!rows.length)return;
-    if(sn==='Cover'||sn==='Cover Letter'){importCoverSheet(rows,sn,log);}
-    else if(sn==='Data'){importDataSheet(rows,log);}
-    else if(sn==='Description'){importDescriptionSheet(rows,log);}
-    else if(sn.toLowerCase().includes('observation')){importObservationsSheet(rows,log);}
-    else{
-      const mtype=detectMeterType(sn);
-      if(mtype){importMeterSheet(rows,sn,mtype,log);}
-      else{log.push(`  <span class="warn">  ⚠ Skipped sheet: "${sn}" (unrecognised type)</span>`);}
-    }
-  });
-  return log;
-}
-
-// ── Cover sheet ───────────────────────────────────────────────
-function importCoverSheet(rows,sn,log){
-  let imp=0;const c=state.cover;
-  rows.forEach(row=>{
-    const k=cv(row[0]).toLowerCase(),v=cv(row[1]);if(!v)return;
-    if(k.includes('document no')||k.includes('report no')){c.reportNo=v;imp++;}
-    else if(k.includes('date of audit')){c.dateAudit=fmtDate(v);imp++;}
-    else if(k.includes('date of report')){c.dateReport=fmtDate(v);imp++;}
-    else if(k.includes('installation')){c.installations=v;imp++;}
-  });
-  let mode=null;
-  rows.forEach(row=>{
-    const k=(cv(row[0])+cv(row[1])).toUpperCase();
-    if(k.includes('AUDITOR')){mode='auditors';c.auditors=[];}
-    else if(k.includes('ASSET I/C TA')){mode='icea';c.icea=[];}
-    else if(k.includes('ASSET I/C INST')){mode='icei';c.icei=[];}
-    else if(k.includes('INSTALLATION REP')){mode='instReps';c.instReps=[];}
-    else if(mode){
-      const sl=parseInt(cv(row[0]));if(isNaN(sl)||sl<1)return;
-      if(mode==='instReps')c[mode].push({inst:cv(row[1]),name:cv(row[2]),desig:cv(row[3]),cpf:cv(row[4])});
-      else c[mode].push({name:cv(row[1]),desig:cv(row[2]),cpf:cv(row[3]),contact:cv(row[4])});
-      imp++;
-    }
-  });
-  log.push(`  <span class="ok">  ✓ ${sn}: ${imp} fields</span>`);
-}
-
-// ── Data sheet ────────────────────────────────────────────────
-function importDataSheet(rows,log){
-  // Header row has "Description" somewhere in col 1 or 0; data starts after
-  let start=-1,imp=0;
-  for(let i=0;i<rows.length;i++){
-    const r0=cv(rows[i][0]).toLowerCase(),r1=cv(rows[i][1]).toLowerCase();
-    if(r0.includes('description')||r1.includes('description')){start=i+1;break;}
-  }
-  if(start<0){log.push('  <span class="warn">  ⚠ Data: header not found</span>');return;}
-  const newRows=[];
-  for(let i=start;i<rows.length;i++){
-    // data may be in col 0 or col 1 depending on template
-    let d=cv(rows[i][1])||cv(rows[i][0]);
-    let v=cv(rows[i][2]);
-    let u=cv(rows[i][3]);
-    if(!d)continue;
-    newRows.push({desc:d,value:v,unit:u});imp++;
-  }
-  if(newRows.length)state.assetData.rows=newRows;
-  log.push(`  <span class="ok">  ✓ Data: ${imp} rows</span>`);
-}
-
-// ── Description sheet ─────────────────────────────────────────
-function importDescriptionSheet(rows,log){
-  const ds=state.description;
-  let imp=0;
-  // ── Part 1: Flow Meter Details table ──
-  // Find header row (contains "SN" and "Installation")
-  let meterStart=-1;
-  for(let i=0;i<rows.length;i++){
-    const r=rows[i];
-    if(cv(r[0]).toUpperCase()==='SN'&&cv(r[1]).toUpperCase().includes('INSTALL')){meterStart=i+1;break;}
-  }
-  if(meterStart>=0){
-    ds.meterList=[];
-    for(let i=meterStart;i<rows.length;i++){
-      const r=rows[i];
-      const sn=parseInt(cv(r[0]));if(isNaN(sn)||sn<1)break;
-      // cols: 0=SN,1=Installation,2=Description,3=MeterType,4=Tag,5=Service,6=Purpose,7=LastCal,8=CalFreq,9+=extra
-      const lastCal=fmtDate(cv(r[7]));
-      ds.meterList.push({
-        inst:cv(r[1]),desc:cv(r[2]),type:cv(r[3]),tag:cv(r[4]),
-        service:cv(r[5]),purpose:cv(r[6]),lastCal:lastCal,
-        freq:cv(r[8]),remarks:cv(r[9])||''
-      });
-      imp++;
-    }
-    log.push(`  <span class="ok">  ✓ Meter list: ${ds.meterList.length} rows (dates parsed)</span>`);
-  }
-
-  // ── Part 2: Calibration Schedule tables ──
-  // Each cal schedule block starts with a row where col0="Type of Meter" / col1="Activity" / col2="Schedule"
-  // Data rows: col0=type(or blank), col1=activity, col2=schedule, col3+=compliance per tag
-  let calImp=0;
-  let i=0;
-  while(i<rows.length){
-    const r=rows[i];
-    const h0=cv(r[0]).toLowerCase(),h1=cv(r[1]).toLowerCase(),h2=cv(r[2]).toLowerCase();
-    // Detect header row of a cal schedule block
-    if((h0.includes('type of meter')||h0.includes('type'))&&h1.includes('activity')&&h2.includes('schedule')){
-      // tags start at col 3
-      const tags=[];
-      for(let t=3;t<r.length;t++){const tg=cv(r[t]);if(tg&&!tg.toLowerCase().includes('meter tag')||tg.length>8)tags.push(tg);else if(tg)tags.push(tg);}
-      // Only keep non-empty tags (filter trailing empties)
-      const cleanTags=[];for(let t=3;t<r.length;t++){const tg=cv(r[t]);if(tg)cleanTags.push(tg);}
-
-      let currentKey=null;
-      let dataRow=i+1;
-      while(dataRow<rows.length){
-        const dr=rows[dataRow];
-        const d0=cv(dr[0]),d1=cv(dr[1]),d2=cv(dr[2]);
-        // Next block header or empty section break
-        if(cv(dr[0]).toLowerCase().includes('type of meter')&&cv(dr[1]).toLowerCase().includes('activity'))break;
-        if(!d1&&!d0){dataRow++;continue;}
-        // Update current meter type if col0 is filled
-        if(d0)currentKey=detectCalSchedKey(d0)||currentKey;
-        if(!currentKey){dataRow++;continue;}
-        const sched=CAL_SCHEDULES.find(s=>s.key===currentKey);
-        if(!sched){dataRow++;continue;}
-        // Store tags for this schedule
-        if(cleanTags.length)ds.calTags[currentKey]=cleanTags;
-        // Match activity to schedule row
-        const actIdx=matchActivity(d1,sched.rows);
-        if(actIdx>=0){
-          cleanTags.forEach((_,ti)=>{
-            const val=cv(dr[3+ti]);
-            if(val&&COMP.includes(val)){ds.calSchedules[`${currentKey}_${actIdx}_${ti}`]=val;calImp++;}
-          });
-        }
-        dataRow++;
-      }
-      i=dataRow;
-    } else {i++;}
-  }
-  log.push(`  <span class="ok">  ✓ Cal schedules: ${calImp} compliance entries</span>`);
-
-  // ── Part 3: Summary rows ──
-  const SR=[['custGas','custody meter (gas)'],['custOil','custody meter (oil)'],['custCon','custody meter (condensate'],['prodGas','production meter (gas)'],['prodOil','production meter (oil)'],['wb','weighbridge']];
-  rows.forEach(row=>{
-    const sn=parseInt(cv(row[0]));if(isNaN(sn)||sn<1||sn>6)return;
-    const label=cv(row[1]).toLowerCase();
-    const match=SR.find(([,l])=>label.includes(l.split('(')[0].trim()));
-    if(!match)return;
-    const key=match[0];
-    ['T','W','NW','C','NC'].forEach((sf,j)=>{const v=cv(row[j+2]);if(v){ds.summary[key+sf]=v;imp++;}});
-  });
-
-  imp+=calImp;
-  log.push(`  <span class="ok">  ✓ Description total: ${imp} items imported</span>`);
-}
-
-// ── Observations sheet ────────────────────────────────────────
-function importObservationsSheet(rows,log){
-  let start=-1,imp=0;
-  for(let i=0;i<rows.length;i++){
-    const h=cv(rows[i][0]).toUpperCase();
-    if(h.includes('SL')||h.includes('OBSERVATION')){
-      if(cv(rows[i][1]).toLowerCase().includes('tag')||cv(rows[i][2]).toLowerCase().includes('obs'))
-        {start=i+1;break;}
-    }
-  }
-  if(start<0){log.push('  <span class="warn">  ⚠ Observations: header not found</span>');return;}
-  for(let i=start;i<rows.length;i++){
-    const sn=parseInt(cv(rows[i][0]));if(isNaN(sn)||sn<1)continue;
-    const tag=cv(rows[i][1]),obs=cv(rows[i][2]),cat=cv(rows[i][3]),pri=cv(rows[i][4]),act=cv(rows[i][5]),wc=cv(rows[i][6]);
-    if(!obs&&!tag)continue;
-    const exists=state.observations.find(o=>o.tag===tag&&o.obs===obs);
-    if(!exists)state.observations.push({tag,obs,cat:OBS_CAT.includes(cat)?cat:'',priority:OBS_PRI.includes(pri)?pri:'',action:act,workcentre:wc});
-    imp++;
-  }
-  log.push(`  <span class="ok">  ✓ Observations: ${imp} rows</span>`);
-}
-
-// ── Meter checklist sheet (multi-meter side-by-side columns) ──
-function importMeterSheet(rows,sn,mtype,log){
-  if(!state.meters[mtype])state.meters[mtype]=[];
-  const cl=CL[mtype]||[];
-  // Build checkpoint id lookup
-  const cpMap={};cl.forEach(sec=>sec.items.forEach(item=>cpMap[item.id]=true));
-
-  // Find the data header row: col0="SN", col1 contains "Checkpoint"
-  let headerRow=-1;
-  for(let i=0;i<rows.length;i++){
-    if(cv(rows[i][0]).toUpperCase()==='SN'&&cv(rows[i][1]).toLowerCase().includes('check')){headerRow=i;break;}
-  }
-  if(headerRow<0){log.push(`  <span class="warn">  ⚠ ${sn}: checkpoint header not found</span>`);return;}
-
-  // Count meters from header row: cols 2,4,6... = Detail/Value columns
-  // But first get tags from row where col0="Tag No."
-  const tagRow=rows.findIndex(r=>cv(r[0]).toLowerCase().includes('tag no'));
-  const meterCount=Math.floor((rows[headerRow].length-2)/2)||1;
-  const meters=[];
-  for(let mi=0;mi<meterCount;mi++){
-    const valCol=2+mi*2;
-    const remCol=3+mi*2;
-    // Get tag from tagRow
-    let tag='';
-    if(tagRow>=0){tag=cv(rows[tagRow][valCol]);}
-    if(!tag||tag.toLowerCase().startsWith('meter'))tag=mtype+' '+(mi+1);
-    const m={label:tag,header:{inst:'',svc:'',consumer:'',make:'',size:''},data:{}};
-    // Read header fields from rows before headerRow
-    for(let r=0;r<headerRow;r++){
-      const k=cv(rows[r][0]).toLowerCase();
-      const v=cv(rows[r][valCol]);
-      if(!v)continue;
-      if(k.includes('installation'))m.header.inst=v;
-      else if(k.includes('service'))m.header.svc=v;
-      else if(k.includes('consumer'))m.header.consumer=v;
-      else if(k.includes('make')||k.includes('model'))m.header.make=v;
-      else if(k.includes('meter size')||k==='size')m.header.size=v;
-    }
-    meters.push({m,valCol,remCol});
-  }
-
-  // Read checkpoint rows
-  let imp=0;
-  for(let r=headerRow+1;r<rows.length;r++){
-    const id=cv(rows[r][0]);
-    if(!id||!cpMap[id])continue;
-    meters.forEach(({m,valCol,remCol})=>{
-      const val=cv(rows[r][valCol]);
-      const rem=cv(rows[r][remCol]);
-      if(val||rem){
-        if(!m.data[id])m.data[id]={val:'',rem:''};
-        if(val)m.data[id].val=val;
-        if(rem)m.data[id].rem=rem;
-        imp++;
-      }
-    });
-  }
-
-  // Merge: if meter with same tag already exists, update it; else push new
-  meters.forEach(({m})=>{
-    const existing=state.meters[mtype].find(x=>x.label===m.label);
-    if(existing){Object.assign(existing.header,m.header);Object.assign(existing.data,m.data);}
-    else{state.meters[mtype].push(m);state.activeMeters[mtype]=state.meters[mtype].length-1;}
-  });
-
-  log.push(`  <span class="ok">  ✓ ${sn} (${mtype}): ${meters.length} meter(s), ${imp} checkpoint fields</span>`);
-}
-
-// ── INIT ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
 loadData();renderNav();renderPage();
 setInterval(()=>saveData(true),60000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
