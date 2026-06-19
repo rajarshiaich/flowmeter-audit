@@ -1058,75 +1058,120 @@ function importDescription(rows,log){
 }
 
 function importCalSchedules(rows,log){
-  // Map from Excel schedule row label → CAL_SCHEDULES key (case-insensitive)
+  /*
+   * Excel structure (one block per meter type):
+   *
+   *   Row A: Type of Meter | Activity | Schedule | TAG1 | TAG2 | ... | REMARKS | Meter Tag N | ...
+   *   Row B: Orifice       | Cal. DPT | Every 3m | val1 | val2 | ... | remark  | ...
+   *   Row C: (empty)       | Cal. PT  | Every 3m | val1 | val2 | ...
+   *   ...
+   *   (blank rows)
+   *   Row D: Type of Meter | Activity | Schedule | TAG-A | TAG-B | ...
+   *   Row E: USM           | Diag+ZCk | Every 6m | val  | val  | ...
+   *
+   * Key rules:
+   *  - Col 0 in Row A is always "Type of Meter"
+   *  - Real tags live at col ≥ 3, excluding cells whose HEADER is "REMARKS" or "Meter Tag N"
+   *  - Store each real tag's COLUMN INDEX so we can read the right cell in data rows
+   *  - Assign tags to state the moment we detect the meter type (Row B) — NOT at end of loop
+   *  - Metering System is special: header has only REMARKS → col3 of data row used as status tag
+   */
   const typeMap={
     'orifice':'orifice','usm':'usm','mfm':'mfm',
     'turbine meter':'tfm','turbine':'tfm','coriolis':'mfm',
     'flow computer':'fc','metering system':'ms'
   };
+
   let currentKey=null;
-  let tags=null;
+  let tagColIndices=[];   // actual column indices (in the row array) for each real tag
   let compCount=0;
+  // Pending info from the last header row seen
+  let pendingTagNames=null;   // string[]
+  let pendingTagCols=null;    // number[]  (parallel to pendingTagNames)
+  let pendingOnlyRemarks=false; // true when header had only REMARKS (Metering System)
 
   for(let i=0;i<rows.length;i++){
     const r=rows[i];
-    const col0=str(r[0]).toLowerCase().trim();
-    const col1=str(r[1]).toLowerCase().trim();
-    const col2=str(r[2]).toLowerCase().trim();
+    const raw0=str(r[0]);
+    const raw1=str(r[1]);
+    const col0=raw0.toLowerCase();
+    const col1=raw1.toLowerCase();
 
-    // Detect header row: "Type of Meter" in col0 with tags in cols 3+
-    if((col0==='type of meter'||col0==='type of meter ')&&col1==='activity'&&col2==='schedule'){
-      // Extract tags from columns 3 onwards
-      const potentialTags=r.slice(3).map(v=>str(v)).filter(v=>v&&v!==''&&!v.toLowerCase().includes('remarks')&&!v.toLowerCase().includes('meter tag'));
-      if(potentialTags.length>0)tags=potentialTags;
+    // ── 1. Header row: "Type of Meter | Activity | Schedule | …" ────────────────
+    if(col0.includes('type of meter')&&col1==='activity'){
+      pendingTagNames=[];pendingTagCols=[];pendingOnlyRemarks=false;
+      let allRemarks=true;
+      for(let ci=3;ci<r.length;ci++){
+        const v=str(r[ci]);
+        if(!v)continue;
+        const vl=v.toLowerCase();
+        if(vl==='remarks'){continue;}              // skip REMARKS column header
+        if(/^meter\s*tag\s*\d*$/i.test(v)){continue;} // skip generic placeholders
+        pendingTagNames.push(v);
+        pendingTagCols.push(ci);
+        allRemarks=false;
+      }
+      // If ONLY a REMARKS col existed (Metering System pattern)
+      if(pendingTagNames.length===0){pendingOnlyRemarks=true;}
       continue;
     }
 
-    // Detect meter type data row
+    // ── 2. Meter-type row: col0 matches a known meter type ──────────────────────
     let detectedKey=null;
     for(const [label,key] of Object.entries(typeMap)){
-      if(col0===label||col0.startsWith(label.split(' ')[0])){
-        detectedKey=key;
-        break;
-      }
+      if(col0===label){detectedKey=key;break;}
     }
-    if(detectedKey)currentKey=detectedKey;
-    if(!currentKey||!tags)continue;
+    if(detectedKey){
+      currentKey=detectedKey;
+      if(pendingTagNames!==null){
+        if(!pendingOnlyRemarks&&pendingTagNames.length>0){
+          // Normal: assign real tags & their column positions
+          state.description.calTags[currentKey]=[...pendingTagNames];
+          tagColIndices=[...pendingTagCols];
+        } else {
+          // Metering System style: use data-row col-3 text as the display tag name
+          const statusVal=str(r[3]||'');
+          if(statusVal){
+            state.description.calTags[currentKey]=[statusVal];
+          }
+          tagColIndices=[];   // nothing to import as Complied/Not Complied
+        }
+        pendingTagNames=null;pendingTagCols=null;
+      }
+      // Fall-through: col1 of this same row may contain the first activity
+    }
 
-    // Detect activity row (col1 has activity text)
+    if(!currentKey||tagColIndices.length===0)continue;
+
+    // ── 3. Activity row: col1 matches a known activity ──────────────────────────
     const sched=CAL_SCHEDULES.find(s=>s.key===currentKey);
     if(!sched)continue;
 
-    // Match activity from col1
+    // Normalize whitespace (Excel may have double-spaces e.g. "Calibration of  RTD")
+    const normCol1=col1.replace(/\s+/g,' ').trim();
     let activityRow=-1;
     for(let ri=0;ri<sched.rows.length;ri++){
-      const schedActivity=sched.rows[ri].a.toLowerCase();
-      if(schedActivity.includes(col1.substring(0,20))||col1.includes(schedActivity.substring(0,15))){
+      const sa=sched.rows[ri].a.toLowerCase().replace(/\s+/g,' ').trim();
+      if(sa.includes(normCol1.substring(0,20))||normCol1.includes(sa.substring(0,20))){
         activityRow=ri;break;
       }
     }
     if(activityRow===-1)continue;
 
-    // Read compliance values for each tag (starting from col 3)
-    const dataStart=3;
-    tags.forEach((tag,ti)=>{
-      const val=str(r[dataStart+ti]||'').trim();
-      if(val){
-        const k=`${currentKey}_${activityRow}_${ti}`;
-        // Map compliance values
-        if(val.toLowerCase().includes('complied')||val.toLowerCase()==='complied')
-          state.description.calSchedules[k]='Complied';
-        else if(val.toLowerCase().includes('not complied')||val.toLowerCase()==='not complied')
-          state.description.calSchedules[k]='Not Complied';
-        else if(COMP.includes(val))
-          state.description.calSchedules[k]=val;
-        compCount++;
-      }
+    // ── 4. Read compliance values using stored column indices ────────────────────
+    tagColIndices.forEach((ci,ti)=>{
+      const val=str(r[ci]||'').trim();
+      if(!val)return;
+      const k=`${currentKey}_${activityRow}_${ti}`;
+      const vl=val.toLowerCase();
+      if(vl.includes('not complied'))
+        state.description.calSchedules[k]='Not Complied';   // check "not" FIRST
+      else if(vl==='complied'||vl.includes('complied'))
+        state.description.calSchedules[k]='Complied';
+      else if(COMP.includes(val))
+        state.description.calSchedules[k]=val;
+      compCount++;
     });
-  }
-  // Update tags in state from extracted tags
-  if(currentKey&&tags&&(!state.description.calTags[currentKey]||state.description.calTags[currentKey].every(t=>t.startsWith('Meter Tag')))){
-    state.description.calTags[currentKey]=[...tags];
   }
   if(compCount>0)addLog(log,'ok',`  ✓ Cal. schedules: ${compCount} compliance entries imported`);
 }
