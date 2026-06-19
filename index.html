@@ -1058,14 +1058,13 @@ function importDescription(rows,log){
 }
 
 function importCalSchedules(rows,log){
-  // Map from Excel schedule row label → CAL_SCHEDULES key
+  // Map from Excel schedule row label → CAL_SCHEDULES key (case-insensitive)
   const typeMap={
     'orifice':'orifice','usm':'usm','mfm':'mfm',
-    'turbine meter':'tfm','turbine':'tfm',
+    'turbine meter':'tfm','turbine':'tfm','coriolis':'mfm',
     'flow computer':'fc','metering system':'ms'
   };
   let currentKey=null;
-  let currentRowIdx=0; // index within sched.rows
   let tags=null;
   let compCount=0;
 
@@ -1073,50 +1072,61 @@ function importCalSchedules(rows,log){
     const r=rows[i];
     const col0=str(r[0]).toLowerCase().trim();
     const col1=str(r[1]).toLowerCase().trim();
+    const col2=str(r[2]).toLowerCase().trim();
 
-    // Detect meter type header
+    // Detect header row: "Type of Meter" in col0 with tags in cols 3+
+    if((col0==='type of meter'||col0==='type of meter ')&&col1==='activity'&&col2==='schedule'){
+      // Extract tags from columns 3 onwards
+      const potentialTags=r.slice(3).map(v=>str(v)).filter(v=>v&&v!==''&&!v.toLowerCase().includes('remarks')&&!v.toLowerCase().includes('meter tag'));
+      if(potentialTags.length>0)tags=potentialTags;
+      continue;
+    }
+
+    // Detect meter type data row
+    let detectedKey=null;
     for(const [label,key] of Object.entries(typeMap)){
-      if(col0===label||(col0===''&&col1===label)){
-        currentKey=key;currentRowIdx=0;
-        // Next non-empty row after this has the tags
-        // Look at this row's columns 3+ for tags
-        const potentialTags=r.slice(3).map(v=>str(v)).filter(v=>v&&v!=='');
-        if(potentialTags.length>0){
-          tags=potentialTags;
-          if(!state.description.calTags[key]||state.description.calTags[key].every(t=>t.startsWith('Meter Tag')))
-            state.description.calTags[key]=[...tags];
-        }
+      if(col0===label||col0.startsWith(label.split(' ')[0])){
+        detectedKey=key;
         break;
       }
     }
-    if(!currentKey)continue;
+    if(detectedKey)currentKey=detectedKey;
+    if(!currentKey||!tags)continue;
 
-    // Detect activity row (col1 has activity text, col0 empty or same as meter type)
+    // Detect activity row (col1 has activity text)
     const sched=CAL_SCHEDULES.find(s=>s.key===currentKey);
     if(!sched)continue;
 
-    // If col0 or col1 matches an activity
+    // Match activity from col1
     let activityRow=-1;
-    const activity=(col0===''||typeMap[col0]!==undefined)?col1:col0;
     for(let ri=0;ri<sched.rows.length;ri++){
-      if(sched.rows[ri].a.toLowerCase().includes(activity.substring(0,15))){
+      const schedActivity=sched.rows[ri].a.toLowerCase();
+      if(schedActivity.includes(col1.substring(0,20))||col1.includes(schedActivity.substring(0,15))){
         activityRow=ri;break;
       }
     }
     if(activityRow===-1)continue;
-    if(!tags)continue;
 
-    // Read compliance values for each tag
-    const dataStart=3; // cols 0=type, 1=activity, 2=schedule, 3+=values
+    // Read compliance values for each tag (starting from col 3)
+    const dataStart=3;
     tags.forEach((tag,ti)=>{
-      const val=str(r[dataStart+ti]).trim();
+      const val=str(r[dataStart+ti]||'').trim();
       if(val){
         const k=`${currentKey}_${activityRow}_${ti}`;
-        if(COMP.includes(val))state.description.calSchedules[k]=val;
-        else if(val.toLowerCase().includes('compli'))state.description.calSchedules[k]='Complied';
+        // Map compliance values
+        if(val.toLowerCase().includes('complied')||val.toLowerCase()==='complied')
+          state.description.calSchedules[k]='Complied';
+        else if(val.toLowerCase().includes('not complied')||val.toLowerCase()==='not complied')
+          state.description.calSchedules[k]='Not Complied';
+        else if(COMP.includes(val))
+          state.description.calSchedules[k]=val;
         compCount++;
       }
     });
+  }
+  // Update tags in state from extracted tags
+  if(currentKey&&tags&&(!state.description.calTags[currentKey]||state.description.calTags[currentKey].every(t=>t.startsWith('Meter Tag')))){
+    state.description.calTags[currentKey]=[...tags];
   }
   if(compCount>0)addLog(log,'ok',`  ✓ Cal. schedules: ${compCount} compliance entries imported`);
 }
